@@ -1,0 +1,60 @@
+# --- Secrets (NEVER COMMIT) ---
+*.pem
+*.key
+id_*
+!id_*.md
+.env
+.env.*
+secrets.*
+*.p12
+*.pfx
+*.cer
+
+# --- Arduino / ESP32 build artifacts ---
+build/
+*.bin
+*.elf
+*.map
+*.hex
+*.eep
+.pio/
+.pioenvs/
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+
+# --- Synced shared headers (the source of truth is shared/; copies are generated) ---
+LoRaMeshing/SensorNode/Protocol.h
+LoRaMeshing/SensorNode/AudioCues.h
+LoRaMeshing/SensorNode/LoRaConfig.h
+LoRaMeshing/MasterNode/Protocol.h
+LoRaMeshing/MasterNode/AudioCues.h
+LoRaMeshing/MasterNode/LoRaConfig.h
+Rx/SoldierNode/Protocol.h
+Rx/SoldierNode/AudioCues.h
+Rx/SoldierNode/LoRaConfig.h
+
+# --- Python / analysis ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- KiCad / CAD ---
+*-backups/
+fp-info-cache
+*.kicad_pro.lock
+*.bak
+*.stl.bak
+
+# --- OS / IDE ---
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+.idea/
+.vs/
+
+# --- Claude Code local overrides (per-machine, not committed) ---
+.claude/settings.local.json

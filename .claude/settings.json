@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(arduino-cli compile:*)",
+      "Bash(arduino-cli board list:*)",
+      "Bash(arduino-cli lib list:*)",
+      "Bash(arduino-cli core list:*)",
+      "Bash(python triangulate.py:*)",
+      "Bash(python parse_log.py:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(ffprobe:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(ssh -T git@github.com)",
+      "Bash(gh auth status)",
+      "Read",
+      "Grep",
+      "Glob"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)",
+      "Read(shared/keys/*.priv)",
+      "Read(**/*.priv)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/id_*)"
+    ]
+  }
+}

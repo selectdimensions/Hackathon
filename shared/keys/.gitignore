@@ -1,0 +1,4 @@
+# Belt-and-braces — also in the top-level .gitignore.
+# Never commit private keys.
+private/
+*.priv

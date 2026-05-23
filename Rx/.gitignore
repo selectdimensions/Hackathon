@@ -1,0 +1,19 @@
+# Arduino build artifacts
+build/
+*.bin
+*.elf
+*.map
+*.hex
+
+# Synced shared headers
+*/Protocol.h
+*/AudioCues.h
+*/LoRaConfig.h
+*/Crypto.h
+*/PinnedKeys.h
+
+# LittleFS staging
+data/
+
+# Local Claude settings
+.claude/settings.local.json

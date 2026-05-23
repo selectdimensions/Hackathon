@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+.ruff_cache/
+
+# Live logs (the .gitkeep stays committed; *.jsonl ignored)
+logs/*.jsonl
+fixtures/*.priv
+
+# Local Claude settings
+.claude/settings.local.json
+.cc-history

@@ -1,0 +1,9 @@
+# Piper TTS models (large, regenerable)
+piper-models/
+
+# Scratch / autosave
+*.bak
+*~
+
+# Local Claude settings
+.claude/settings.local.json

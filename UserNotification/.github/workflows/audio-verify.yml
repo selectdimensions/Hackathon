@@ -1,0 +1,74 @@
+name: audio-verify
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  ffprobe:
+    name: ffprobe (8 kHz mono 16-bit PCM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Verify every clips/*.wav matches the manifest spec
+        run: |
+          set -e
+          shopt -s nullglob
+          fails=0
+          clips=(clips/*.wav)
+          if [ ${#clips[@]} -eq 0 ]; then
+            echo "No clips yet — passing (v0.1 scaffold)."
+            exit 0
+          fi
+          for f in "${clips[@]}"; do
+            info=$(ffprobe -v error -select_streams a:0 \
+                           -show_entries stream=sample_rate,channels,bits_per_sample,codec_name \
+                           -of json "$f")
+            rate=$(echo "$info" | python3 -c 'import sys,json; print(json.load(sys.stdin)["streams"][0]["sample_rate"])')
+            ch=$(echo "$info" | python3 -c 'import sys,json; print(json.load(sys.stdin)["streams"][0]["channels"])')
+            bits=$(echo "$info" | python3 -c 'import sys,json; print(json.load(sys.stdin)["streams"][0]["bits_per_sample"])')
+            codec=$(echo "$info" | python3 -c 'import sys,json; print(json.load(sys.stdin)["streams"][0]["codec_name"])')
+            ok=1
+            [ "$rate"  = "8000"      ] || { echo "::error file=$f::sample_rate=$rate (want 8000)"; ok=0; }
+            [ "$ch"    = "1"         ] || { echo "::error file=$f::channels=$ch (want 1)"; ok=0; }
+            [ "$bits"  = "16"        ] || { echo "::error file=$f::bits_per_sample=$bits (want 16)"; ok=0; }
+            [ "$codec" = "pcm_s16le" ] || { echo "::error file=$f::codec_name=$codec (want pcm_s16le)"; ok=0; }
+            [ $ok -eq 1 ] && echo "ok: $f"
+            [ $ok -eq 1 ] || fails=$((fails+1))
+          done
+          if [ $fails -gt 0 ]; then exit 1; fi
+
+  size-budget:
+    name: clip-length budget (<=2s each, <=2MB total)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Check
+        run: |
+          set -e
+          shopt -s nullglob
+          clips=(clips/*.wav)
+          if [ ${#clips[@]} -eq 0 ]; then exit 0; fi
+          fails=0
+          for f in "${clips[@]}"; do
+            dur=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")
+            cmp=$(python3 -c "print(1 if float('$dur') > 2.0 else 0)")
+            if [ "$cmp" = "1" ]; then echo "::error file=$f::duration ${dur}s > 2.0s"; fails=$((fails+1)); fi
+          done
+          total=$(du -sb clips | awk '{print $1}')
+          max=$((2 * 1024 * 1024))
+          if [ "$total" -gt "$max" ]; then
+            echo "::error::Total clips/ size $total bytes > ${max} bytes"
+            fails=$((fails+1))
+          fi
+          [ $fails -eq 0 ]
