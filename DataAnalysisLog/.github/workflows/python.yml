@@ -1,0 +1,67 @@
+name: python
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    name: ruff + pytest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest
+
+      - name: ruff check
+        run: ruff check .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+      - name: pytest (collect only if no tests yet)
+        run: |
+          if [ -d tests ] || ls test_*.py 2>/dev/null; then
+            pytest -q
+          else
+            echo "No tests yet — collecting will be a no-op."
+            pytest --collect-only -q || true
+          fi
+
+      - name: triangulate.py smoke (fixtures)
+        run: |
+          shopt -s nullglob
+          fixtures=(fixtures/*.jsonl)
+          if [ ${#fixtures[@]} -eq 0 ]; then
+            echo "No fixtures — skipping (v0.1 scaffold)."
+            exit 0
+          fi
+          for fx in "${fixtures[@]}"; do
+            truth="${fx%.jsonl}.truth.json"
+            if [ -f "$truth" ]; then
+              python triangulate.py --fixture "$fx" --truth "$truth"
+            fi
+          done
+
+      - name: parse_log.py smoke (duty-cycle)
+        run: |
+          shopt -s nullglob
+          logs=(logs/*.jsonl)
+          if [ ${#logs[@]} -eq 0 ]; then
+            echo "No captured logs — skipping."
+            exit 0
+          fi
+          python parse_log.py --logs logs/ --report-duty-cycle

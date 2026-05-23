@@ -1,0 +1,78 @@
+name: ci
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    name: pre-commit (runs all agent-check equivalents)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0  # gitleaks wants full history
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files --show-diff-on-failure
+
+  check-protocol:
+    name: lora-protocol-reviewer (deterministic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python scripts/check_protocol.py shared/Protocol.h
+
+  check-audio:
+    name: audio-cue-curator (deterministic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install ffprobe
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: python scripts/check_audio_cues.py
+
+  triangulate:
+    name: triangulation-validator (smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Smoke-run triangulate.py on any fixture present
+        run: |
+          shopt -s nullglob
+          fixtures=(DataAnalysisLog/fixtures/*.jsonl)
+          if [ ${#fixtures[@]} -eq 0 ]; then
+            echo "No fixtures yet — skipping (v0.1 scaffold)."
+            exit 0
+          fi
+          for fx in "${fixtures[@]}"; do
+            truth="${fx%.jsonl}.truth.json"
+            if [ -f "$truth" ]; then
+              python DataAnalysisLog/triangulate.py --fixture "$fx" --truth "$truth" --format json
+            fi
+          done
+
+  duty-cycle:
+    name: eu-duty-cycle-auditor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python scripts/check_eu_duty_cycle.py

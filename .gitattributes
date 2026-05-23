@@ -1,0 +1,25 @@
+# Force LF on source / config — Arduino IDE and arduino-cli are happier with LF.
+*.h         text eol=lf
+*.ino       text eol=lf
+*.cpp       text eol=lf
+*.c         text eol=lf
+*.py        text eol=lf
+*.md        text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+
+# CRLF on PowerShell — Windows-native tooling prefers it.
+*.ps1       text eol=crlf
+# Binary — never normalize, never diff as text.
+*.wav       binary
+*.mp3       binary
+*.png       binary
+*.jpg       binary
+*.bin       binary
+*.elf       binary
+*.stl       binary
+*.step      binary
+*.f3d       binary
+*.kicad_pcb binary
+*.3mf filter=lfs diff=lfs merge=lfs -text

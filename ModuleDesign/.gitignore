@@ -1,0 +1,13 @@
+# KiCad cache + backups
+*-backups/
+fp-info-cache
+*.kicad_pro.lock
+*.bak
+*.lck
+
+# CAD app temp / autosave
+*.f3d.lck
+*~
+
+# Local Claude settings
+.claude/settings.local.json

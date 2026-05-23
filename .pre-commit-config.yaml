@@ -1,0 +1,71 @@
+# pre-commit hooks. Install once: `pip install pre-commit && pre-commit install`.
+# Runs on every `git commit` and also in CI (.github/workflows/ci.yml).
+
+repos:
+  # --- Stock hooks (whitespace, EOF, large files, merge markers, secret patterns) ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+      - id: check-yaml
+      - id: check-json
+      - id: detect-private-key
+
+  # --- Secret scanning ---
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # --- Python style + lint (for DataAnalysisLog) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.5
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  # --- Conventional commit message format ---
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          - feat
+          - fix
+          - proto
+          - crypto
+          - chore
+          - docs
+          - refactor
+          - test
+          - ci
+          - build
+
+  # --- Local custom checks (mirror the Claude Code agents deterministically) ---
+  - repo: local
+    hooks:
+      - id: check-protocol
+        name: lora-protocol-reviewer (deterministic)
+        entry: python scripts/check_protocol.py shared/Protocol.h
+        language: system
+        files: ^shared/Protocol\.h$
+        pass_filenames: false
+
+      - id: check-audio-cues
+        name: audio-cue-curator (deterministic)
+        entry: python scripts/check_audio_cues.py
+        language: system
+        files: ^(shared/AudioCues\.h|UserNotification/(audio_manifest\.md|clips/.*))$
+        pass_filenames: false
+
+      - id: no-priv-keys
+        name: refuse staged .priv files
+        entry: bash -c 'if git diff --cached --name-only | grep -E "\.(priv|pem|p12)$|/id_[a-z0-9]+$"; then echo "REFUSED: private key staged"; exit 1; fi'
+        language: system
+        pass_filenames: false

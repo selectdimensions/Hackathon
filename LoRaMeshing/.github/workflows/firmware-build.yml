@@ -1,0 +1,52 @@
+name: firmware-build
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  arduino-cli:
+    name: arduino-cli compile (ESP32-C6)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sketch: [SensorNode, MasterNode]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+      - name: Install ESP32 board package
+        run: |
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install "RadioLib"
+          arduino-cli lib install "ArduinoJson"
+          arduino-cli lib install "TinyGPSPlus"
+          arduino-cli lib install "Crypto"
+
+      - name: Stage shared headers
+        # In CI we can't run sync_shared.ps1 (PowerShell), so we copy directly.
+        # Parent repo provides shared/ via submodule when this is a submodule;
+        # standalone build relies on a CI checkout that includes shared/.
+        run: |
+          if [ -d "../shared" ]; then
+            cp ../shared/*.h ${{ matrix.sketch }}/
+          else
+            echo "::warning::shared/ not found at ../shared — sketch may fail to compile."
+          fi
+
+      - name: Compile ${{ matrix.sketch }}
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32c6 --warnings all ${{ matrix.sketch }}
