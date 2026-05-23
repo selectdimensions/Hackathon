@@ -66,6 +66,6 @@ repos:
 
       - id: no-priv-keys
         name: refuse staged .priv files
-        entry: bash -c 'if git diff --cached --name-only | grep -E "\.(priv|pem|p12)$|/id_[a-z0-9]+$"; then echo "REFUSED: private key staged"; exit 1; fi'
+        entry: bash scripts/no_priv_keys.sh
         language: system
         pass_filenames: false

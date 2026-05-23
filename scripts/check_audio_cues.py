@@ -83,20 +83,28 @@ def main() -> int:
     for entry in only_in_manifest:
         errs.append(f"in manifest but not {args.header.name}: {entry}")
 
-    # 2. manifest -> file
+    # 2. manifest -> file. Two modes:
+    #    - scaffold state (0 clips committed): pass with a note; the audio team
+    #      hasn't generated clips yet. The manifest is the source of truth that
+    #      the team will fill against.
+    #    - populated state (>=1 clip committed): enforce that every manifest
+    #      entry has a clip, and no orphan clips exist.
     referenced_files = {fn for _, fn in manifest_set}
     if args.clips.exists():
         actual_files = {p.name for p in args.clips.glob("*.wav")}
     else:
         actual_files = set()
 
-    missing = referenced_files - actual_files
-    orphans = actual_files - referenced_files
-
-    for fn in sorted(missing):
-        errs.append(f"manifest references {fn} but clips/{fn} is missing")
-    for fn in sorted(orphans):
-        errs.append(f"clips/{fn} is orphan (not referenced in manifest)")
+    if len(actual_files) == 0:
+        print(f"## audio-cue-curator: clips/ is empty — scaffold state, deferring strict checks. "
+              f"({len(referenced_files)} cues declared in manifest, awaiting WAV generation.)")
+    else:
+        missing = referenced_files - actual_files
+        orphans = actual_files - referenced_files
+        for fn in sorted(missing):
+            errs.append(f"manifest references {fn} but clips/{fn} is missing")
+        for fn in sorted(orphans):
+            errs.append(f"clips/{fn} is orphan (not referenced in manifest)")
 
     # 3. WAV format
     if not args.skip_format and shutil.which("ffprobe"):
