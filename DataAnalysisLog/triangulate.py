@@ -57,8 +57,8 @@ def solve_rssi(events: list[dict]) -> tuple[float, float, str] | None:
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--fixture", required=True, type=Path)
-    p.add_argument("--truth",   required=True, type=Path)
-    p.add_argument("--format",  choices=("json", "text"), default="text")
+    p.add_argument("--truth", required=True, type=Path)
+    p.add_argument("--format", choices=("json", "text"), default="text")
     args = p.parse_args()
 
     events: list[dict] = []
@@ -89,7 +89,9 @@ def main() -> int:
     if args.format == "json":
         print(json.dumps(out, indent=2))
     else:
-        print(f"method={method}  est=({lat:.6f},{lon:.6f})  truth=({truth['lat']:.6f},{truth['lon']:.6f})  err={err_m:.1f} m")
+        print(
+            f"method={method}  est=({lat:.6f},{lon:.6f})  truth=({truth['lat']:.6f},{truth['lon']:.6f})  err={err_m:.1f} m"
+        )
     return 0
 
 

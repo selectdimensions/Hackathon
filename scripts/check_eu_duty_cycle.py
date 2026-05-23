@@ -28,7 +28,13 @@ def main() -> int:
 
     parse_log = Path("DataAnalysisLog/parse_log.py")
     r = subprocess.run(
-        [sys.executable, str(parse_log), "--logs", str(args.logs), "--report-duty-cycle"],
+        [
+            sys.executable,
+            str(parse_log),
+            "--logs",
+            str(args.logs),
+            "--report-duty-cycle",
+        ],
         check=False,
     )
     return r.returncode

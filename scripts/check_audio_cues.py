@@ -47,10 +47,21 @@ def ffprobe_wav(path: Path) -> dict | None:
         return None
     try:
         r = subprocess.run(
-            ["ffprobe", "-v", "error", "-select_streams", "a:0",
-             "-show_entries", "stream=sample_rate,channels,bits_per_sample,codec_name",
-             "-of", "json", str(path)],
-            check=True, capture_output=True, text=True,
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "a:0",
+                "-show_entries",
+                "stream=sample_rate,channels,bits_per_sample,codec_name",
+                "-of",
+                "json",
+                str(path),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
         )
         return json.loads(r.stdout)["streams"][0]
     except (subprocess.CalledProcessError, KeyError, json.JSONDecodeError, IndexError):
@@ -60,23 +71,28 @@ def ffprobe_wav(path: Path) -> dict | None:
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--header", default="shared/AudioCues.h", type=Path)
-    p.add_argument("--manifest", default="UserNotification/audio_manifest.md", type=Path)
+    p.add_argument(
+        "--manifest", default="UserNotification/audio_manifest.md", type=Path
+    )
     p.add_argument("--clips", default="UserNotification/clips", type=Path)
-    p.add_argument("--skip-format", action="store_true",
-                   help="Skip ffprobe sample-rate/channel/bit-depth check")
+    p.add_argument(
+        "--skip-format",
+        action="store_true",
+        help="Skip ffprobe sample-rate/channel/bit-depth check",
+    )
     args = p.parse_args()
 
     if not args.header.exists() or not args.manifest.exists():
         print("check_audio_cues: header or manifest missing", file=sys.stderr)
         return 0
 
-    header_set   = parse_audio_cues_h(args.header)
+    header_set = parse_audio_cues_h(args.header)
     manifest_set = parse_manifest(args.manifest)
 
     errs: list[str] = []
 
     # 1. header ↔ manifest
-    only_in_header   = header_set - manifest_set
+    only_in_header = header_set - manifest_set
     only_in_manifest = manifest_set - header_set
     for entry in only_in_header:
         errs.append(f"in {args.header.name} but not manifest: {entry}")
@@ -96,8 +112,10 @@ def main() -> int:
         actual_files = set()
 
     if len(actual_files) == 0:
-        print(f"## audio-cue-curator: clips/ is empty — scaffold state, deferring strict checks. "
-              f"({len(referenced_files)} cues declared in manifest, awaiting WAV generation.)")
+        print(
+            f"## audio-cue-curator: clips/ is empty — scaffold state, deferring strict checks. "
+            f"({len(referenced_files)} cues declared in manifest, awaiting WAV generation.)"
+        )
     else:
         missing = referenced_files - actual_files
         orphans = actual_files - referenced_files
@@ -114,13 +132,19 @@ def main() -> int:
                 errs.append(f"ffprobe failed on clips/{fn}")
                 continue
             if info.get("sample_rate") != "8000":
-                errs.append(f"clips/{fn} sample_rate={info.get('sample_rate')}, expected 8000")
+                errs.append(
+                    f"clips/{fn} sample_rate={info.get('sample_rate')}, expected 8000"
+                )
             if info.get("channels") != 1:
                 errs.append(f"clips/{fn} channels={info.get('channels')}, expected 1")
             if info.get("bits_per_sample") not in (16, "16"):
-                errs.append(f"clips/{fn} bits_per_sample={info.get('bits_per_sample')}, expected 16")
+                errs.append(
+                    f"clips/{fn} bits_per_sample={info.get('bits_per_sample')}, expected 16"
+                )
             if info.get("codec_name") != "pcm_s16le":
-                errs.append(f"clips/{fn} codec_name={info.get('codec_name')}, expected pcm_s16le")
+                errs.append(
+                    f"clips/{fn} codec_name={info.get('codec_name')}, expected pcm_s16le"
+                )
 
     if errs:
         print("## audio-cue-curator (deterministic) — FAIL")
