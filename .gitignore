@@ -58,3 +58,4 @@ Desktop.ini
 
 # --- Claude Code local overrides (per-machine, not committed) ---
 .claude/settings.local.json
+.cc-history/
