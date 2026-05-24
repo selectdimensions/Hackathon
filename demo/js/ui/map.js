@@ -118,6 +118,10 @@
         pts.push([sc.soldier.lat + r / 111132, sc.soldier.lon]);
         pts.push([sc.soldier.lat - r / 111132, sc.soldier.lon]);
       }
+      // include every emitter waypoint so the incursion path is visible from t=0
+      for (const em of (sc.emitters || [])) {
+        for (const wp of em.path) pts.push([wp.lat, wp.lon]);
+      }
       // fit
       map.fitBounds(L.latLngBounds(pts).pad(0.15));
     }

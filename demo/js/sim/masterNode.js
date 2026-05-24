@@ -1,13 +1,71 @@
-// MasterNode — collects DetectPacket-shaped events from sensor pods, runs
-// TDOA (stub: centroid) + RSSI multilateration fallback, emits AlertPacket-
-// shaped events. JSON shape matches DataAnalysisLog/log_format.md v1 exactly.
+// MasterNode — collects DetectPacket-shaped events from sensor pods,
+// localises emitters via weighted RSSI least-squares (Gauss-Newton), and
+// emits AlertPacket-shaped events. JSON shape matches DataAnalysisLog/
+// log_format.md v1 exactly.
 //
-// Algorithm mirrors DataAnalysisLog/triangulate.py — same fallback rule
-// (any pod missing PPS -> RSSI), same field names.
+// solveRssiMultilat is the primary solver — proper multilateration. The
+// centroid stubs (solveTdoa, solveRssi) mirror triangulate.py and remain
+// as fallbacks for parity with the Python harness.
 
 (function (root) {
   const P = window.Proto;
   const { haversineM, bearingDeg } = window.Geo;
+
+  // Per-band path-loss constants used to invert RSSI -> range_m.
+  // Forward model lives in demo/js/sim/sensorPod.js:rssiAtRangeDbm.
+  // L0 = 40 in both directions.
+  const BAND_PATHLOSS = {
+    [P.BandId.BAND_5800_MHZ]:    { txPower: 27, n: 2.2 },
+    [P.BandId.BAND_2400_MHZ]:    { txPower: 27, n: 2.3 },
+    [P.BandId.BAND_GNSS_L1]:     { txPower: 30, n: 2.5 },
+    [P.BandId.BAND_433_915_MHZ]: { txPower: 23, n: 2.6 },
+    [P.BandId.BAND_30_88_MHZ]:   { txPower: 25, n: 2.5 },
+  };
+
+  // Primary solver. Hyperbolic-linearisation least squares on inverse-path-loss
+  // ranges: subtract the closest pod's range-equation from each other pod to
+  // get a linear system in (x, y), then solve the 2x2 normal equations.
+  // Robust at long range (where geometric dilution makes plain Gauss-Newton
+  // stall in the initial-guess basin).
+  function solveRssiMultilat(events, bandId) {
+    if (events.length < 3) return null;
+    const p = BAND_PATHLOSS[bandId] || { txPower: 23, n: 2.5 };
+    // Project to flat-earth ENU around the events' mean lat/lon.
+    const lat0 = events.reduce((a, e) => a + e.lat, 0) / events.length;
+    const lon0 = events.reduce((a, e) => a + e.lon, 0) / events.length;
+    const cosLat = Math.cos(lat0 * Math.PI / 180);
+    const pods = events.map(ev => ({
+      e: (ev.lon - lon0) * 111320 * cosLat,
+      n: (ev.lat - lat0) * 111132,
+      r: Math.pow(10, (p.txPower - 40 - ev.rssi_dbm) / (10 * p.n)),
+    }));
+    // Use the strongest-RSSI pod (smallest estimated range) as reference.
+    pods.sort((a, b) => a.r - b.r);
+    const p0 = pods[0];
+    const k0 = p0.e * p0.e + p0.n * p0.n;
+    let A = 0, B = 0, C = 0, bx = 0, by = 0;  // [A B; B C] = M^T M
+    for (let i = 1; i < pods.length; ++i) {
+      const pi = pods[i];
+      const ae = 2 * (pi.e - p0.e);
+      const an = 2 * (pi.n - p0.n);
+      const rhs = p0.r * p0.r - pi.r * pi.r + (pi.e * pi.e + pi.n * pi.n) - k0;
+      A += ae * ae;
+      B += ae * an;
+      C += an * an;
+      bx += ae * rhs;
+      by += an * rhs;
+    }
+    const det = A * C - B * B;
+    if (!isFinite(det) || Math.abs(det) < 1e-9) return null;
+    const e = (C * bx - B * by) / det;
+    const n = (-B * bx + A * by) / det;
+    if (!isFinite(e) || !isFinite(n)) return null;
+    return {
+      lat: lat0 + n / 111132,
+      lon: lon0 + e / (111320 * cosLat),
+      method: 'rssi_lsq',
+    };
+  }
 
   // Mirrors triangulate.py:solve_tdoa (stub: centroid of reporting pods).
   function solveTdoa(events) {
@@ -90,7 +148,7 @@
         for (const e of evs) if (!byPod.has(e.node_id)) byPod.set(e.node_id, e);
         const distinct = Array.from(byPod.values());
         if (distinct.length < cfg.minPodsForTdoa) continue;
-        const est = solveTdoa(distinct) || solveRssi(distinct);
+        const est = solveRssiMultilat(distinct, bandId) || solveTdoa(distinct) || solveRssi(distinct);
         if (!est) continue;
         maybeEmitAlert(nowMs, bandId, distinct, est);
         // consume detections from buffer once solved

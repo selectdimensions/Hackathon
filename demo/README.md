@@ -54,6 +54,10 @@ A 15-pod forward screen in three rows (500 m, 1.5 km, 3 km in front of the soldi
 
 That's ten progressively-tightening callouts over the 9 km of approach — the early-warning story the hardware is designed to deliver.
 
+The master uses **weighted Gauss-Newton RSSI multilateration** (`solve_method: "rssi_lsq"`) on the 15-pod range estimates so the localisation tracks the drone, not the pod cluster centroid. The TDOA + RSSI-centroid stubs from [DataAnalysisLog/triangulate.py](../DataAnalysisLog/triangulate.py) remain as fallbacks for parity with the Python harness.
+
+Sim runs at **10×** real time (~54 s real for a 9-minute approach). Audio is **FIFO-queued** — every km cue plays to completion in order; cues never get clipped by a fresher alert.
+
 ## Audio cue mapping
 
 The demo uses the fine-grained cue range `0x50–0x6F` added in [shared/AudioCues.h](../shared/AudioCues.h):

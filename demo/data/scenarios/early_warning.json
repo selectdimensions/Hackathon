@@ -1,9 +1,9 @@
 {
   "id": "early_warning",
   "label": "Early warning — 15-pod forward screen, drone 10 km → 1 km @ 60 km/h",
-  "description": "Defensive screen of 15 BladeRF/SX1262 pods deployed forward of the soldier in three rows (500 m, 1.5 km, 3 km). 5.8 GHz FPV drone enters from 10 km north at 60 km/h and closes to 1 km. The master fires a new alert every time the range bucket crosses a 1-km boundary, demonstrating that the soldier gets ~9 minutes of audio warnings (deg/dist phrases) before impact. Simulation runs at 20× real time so a 9-minute scenario plays in ~27 s.",
+  "description": "Defensive screen of 15 BladeRF/SX1262 pods deployed forward of the soldier in three rows (500 m, 1.5 km, 3 km). 5.8 GHz FPV drone enters from 10 km north at 60 km/h and closes to 1 km. The master fires a new alert every time the range bucket crosses a 1-km boundary, demonstrating that the soldier gets ~9 minutes of audio warnings (deg/dist phrases) before impact. Simulation runs at 10× real time so a 9-minute scenario plays in ~54 s with full per-km cue narration.",
   "anchor": { "lat": 50.0875, "lon": 14.4213 },
-  "time_scale": 20,
+  "time_scale": 10,
   "range_rings_m": [1000, 2000, 5000, 10000],
   "pods": [
     { "node_id":  1, "label": "F1 — fwd L",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -1000, "northM":  500 },
