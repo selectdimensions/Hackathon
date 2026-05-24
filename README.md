@@ -97,3 +97,7 @@ Conventional commit prefixes: `feat:`, `fix:`, `proto:` (wire-format change), `c
 ## Status
 
 v0.1 — framework scaffold only. Firmware bodies are skeletons. Out-of-scope (Motorola DMR/P25 bridge, MQTT/Grafana analytics, TTS pipeline) is documented in [DataAnalysisLog/TODO_motorola_bridge.md](DataAnalysisLog/TODO_motorola_bridge.md).
+
+## Live demo
+
+[demo/](demo/) is a self-contained HTML visualisation of the full pipeline running on a Leaflet map — sensor pods, master triangulation, soldier audio cues — driven by simulated `DetectPacket` / `AlertPacket` events whose JSON matches [DataAnalysisLog/log_format.md](DataAnalysisLog/log_format.md) v1. Works fully offline (vendored Leaflet + procedural basemap). See [demo/README.md](demo/README.md).
