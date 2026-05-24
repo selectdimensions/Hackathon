@@ -6,8 +6,8 @@
     { id: 'blade',   label: 'BladeRF\n5.8 GHz' },
     { id: 'pi',      label: 'Raspberry Pi' },
     { id: 'esp',     label: 'ESP32-C6\nSX1262' },
-    { id: 'lora_u',  label: 'LoRa 868.1\nDetectPkt' },
-    { id: 'master',  label: 'Master\nTDOA/RSSI' },
+    { id: 'mesh',    label: 'LoRa mesh\nDetectPkt hops' },
+    { id: 'master',  label: 'C&C\nRSSI multilat' },
     { id: 'lora_d',  label: 'LoRa 868.3\nAlertPkt' },
     { id: 'soldier', label: 'Soldier\nI2S DAC' },
   ];
@@ -43,7 +43,7 @@
     function onDetect(ev) {
       // light up sensor side
       if (ev._is_live) flash('blade'), flash('pi'), flash('esp');
-      flash('lora_u', 'flash-detect');
+      flash('mesh', 'flash-detect');
     }
     function onAlert(ev) {
       flash('master', 'flash-alert');

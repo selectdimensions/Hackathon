@@ -71,6 +71,9 @@
     });
   }
 
+  const MESH_HOP_THROTTLE_MS = 350;
+  const lastHopByPod = new Map();
+
   function handleMasterEvent(ev) {
     eventLogUI.append(ev);
     if (ev.event === 'detect') {
@@ -78,24 +81,46 @@
       const pod = scenario.pods.find(p => p.node_id === ev.node_id);
       if (pod) {
         mapUI.pulseRing(pod.lat, pod.lon, '#5fa9ff');
-        const sLatLon = mapUI.soldierLatLon();
-        if (sLatLon) mapUI.loraArrow([pod.lat, pod.lon], sLatLon, '#ffcc66');
+        const now = Date.now();
+        const last = lastHopByPod.get(ev.node_id) || 0;
+        if (now - last >= MESH_HOP_THROTTLE_MS) {
+          lastHopByPod.set(ev.node_id, now);
+          if (scenario.c2) {
+            // mesh-routed: packet hops to C&C via shortest path
+            mapUI.animateMeshHop(ev.node_id);
+          } else {
+            // no C&C declared: direct sensor -> soldier arrow (legacy scenarios)
+            const sLatLon = mapUI.soldierLatLon();
+            if (sLatLon) mapUI.loraArrow([pod.lat, pod.lon], sLatLon, '#ffcc66');
+          }
+        }
       }
     } else if (ev.event === 'alert') {
       pipelineUI.onAlert(ev);
       mapUI.showSolve(ev._emitter_lat, ev._emitter_lon, ev.solve_residual_m, {
         lat: scenario.soldier.lat, lon: scenario.soldier.lon,
       });
+      // alert path: C&C -> soldier (direct LoRa downlink on 868.3 MHz)
       const sLatLon = mapUI.soldierLatLon();
-      if (sLatLon) mapUI.loraArrow([ev._emitter_lat, ev._emitter_lon], sLatLon, '#ff5050');
+      const c2 = mapUI.c2NodeLatLon();
+      if (sLatLon && c2) mapUI.loraArrow([c2.lat, c2.lon], sLatLon, '#ff5050');
+      else if (sLatLon) mapUI.loraArrow([ev._emitter_lat, ev._emitter_lon], sLatLon, '#ff5050');
       soldier.handleAlert(ev);
     }
   }
+
+  // Each pod transmits a DetectPacket at most once every POD_POLL_MS (200 ms),
+  // matching a realistic LoRa duty cycle and avoiding visual smear on a 25-pod
+  // mesh. Polls are staggered by node_id so they don't all fire on the same tick.
+  const POD_POLL_MS = 200;
+  const lastPolledByPod = new Map();
+  let tickCounter = 0;
 
   function tick() {
     const nowMs = Date.now();
     const scale = scenario.time_scale || 1;
     tElapsedMs += TICK_MS * scale;
+    tickCounter++;
     const simSec = (tElapsedMs / 1000).toFixed(1);
     const realSec = ((tElapsedMs / scale) / 1000).toFixed(1);
     document.getElementById('clock').textContent =
@@ -108,10 +133,14 @@
       if (!state) continue;
       const hot = (tElapsedMs >= (em.path[em.path.length - 1].t_ms - 5000));
       mapUI.updateEmitter(em.id, state.lat, state.lon, 0, em.label, hot);
-      // each pod polls
+      // each pod polls — throttled with per-pod stagger
       for (let i = 0; i < pods.length; ++i) {
         const pod = pods[i];
         if (pod.state.band !== state.bandId) continue;
+        const last = lastPolledByPod.get(pod.state.nodeId) || 0;
+        const stagger = (pod.state.nodeId * 37) % POD_POLL_MS;
+        if (nowMs - last < POD_POLL_MS - stagger / POD_POLL_MS * 50) continue;
+        lastPolledByPod.set(pod.state.nodeId, nowMs);
         const ev = pod.poll(nowMs, state);
         if (ev) master.ingestDetect(ev);
       }

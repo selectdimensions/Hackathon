@@ -57,9 +57,34 @@
     }
     const det = A * C - B * B;
     if (!isFinite(det) || Math.abs(det) < 1e-9) return null;
-    const e = (C * bx - B * by) / det;
-    const n = (-B * bx + A * by) / det;
+    let e = (C * bx - B * by) / det;
+    let n = (-B * bx + A * by) / det;
     if (!isFinite(e) || !isFinite(n)) return null;
+    // Refine with up to 5 Gauss-Newton iterations on the original (non-linearised)
+    // range residuals. The linear LS initial guess puts us well inside the basin.
+    for (let iter = 0; iter < 5; ++iter) {
+      let GA = 0, GB = 0, GC = 0, gx = 0, gy = 0;
+      for (const pod of pods) {
+        const de = e - pod.e;
+        const dn = n - pod.n;
+        const d = Math.hypot(de, dn) || 1e-6;
+        const Je = de / d;
+        const Jn = dn / d;
+        const f = d - pod.r;
+        GA += Je * Je;
+        GB += Je * Jn;
+        GC += Jn * Jn;
+        gx += Je * f;
+        gy += Jn * f;
+      }
+      const gdet = GA * GC - GB * GB;
+      if (!isFinite(gdet) || Math.abs(gdet) < 1e-12) break;
+      const se = -( GC * gx - GB * gy) / gdet;
+      const sn = -(-GB * gx + GA * gy) / gdet;
+      e += se;
+      n += sn;
+      if (Math.abs(se) + Math.abs(sn) < 0.01) break;
+    }
     return {
       lat: lat0 + n / 111132,
       lon: lon0 + e / (111320 * cosLat),

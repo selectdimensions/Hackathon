@@ -22,6 +22,10 @@
       ...raw.soldier,
       ...offsetToLatLon(anchor, raw.soldier.eastM, raw.soldier.northM),
     };
+    const c2 = raw.c2 ? {
+      ...raw.c2,
+      ...offsetToLatLon(anchor, raw.c2.eastM, raw.c2.northM),
+    } : null;
     const emitters = raw.emitters.map(e => ({
       ...e,
       path: e.path.map(wp => ({
@@ -29,7 +33,7 @@
         ...offsetToLatLon(anchor, wp.eastM, wp.northM),
       })),
     }));
-    return { ...raw, anchor, pods, soldier, emitters };
+    return { ...raw, anchor, pods, soldier, c2, emitters };
   }
 
   // Interpolate an emitter's position at scenario time t_ms.

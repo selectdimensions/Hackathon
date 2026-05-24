@@ -65,7 +65,10 @@
 
     const layers = {
       rangeRings: L.layerGroup().addTo(map),
+      mesh:    L.layerGroup().addTo(map),
+      meshHop: L.layerGroup().addTo(map),
       pods:    L.layerGroup().addTo(map),
+      c2:      L.layerGroup().addTo(map),
       drone:   L.layerGroup().addTo(map),
       solve:   L.layerGroup().addTo(map),
       arrows:  L.layerGroup().addTo(map),
@@ -76,14 +79,19 @@
     let podMarkers = {};
     let droneMarkers = {};
     let soldierMarker = null;
+    let c2Marker = null;
+    let c2LatLon = null;
     let solveMarker = null;
     let solveRing = null;
+    let meshGraph = null;  // {nodes: [{id, lat, lon}], adj: Map<id, Map<id, edgeLine>>}
 
     function setScenario(sc) {
       Object.values(layers).forEach(l => l.clearLayers());
       podMarkers = {};
       droneMarkers = {};
+      c2Marker = null; c2LatLon = null;
       solveMarker = null; solveRing = null;
+      meshGraph = null;
 
       const pts = [];
       // range rings around soldier (early-warning visualisation)
@@ -107,11 +115,24 @@
         podMarkers[p.node_id] = m;
         pts.push([p.lat, p.lon]);
       }
+      // C&C node (rear command-and-control)
+      if (sc.c2) {
+        c2LatLon = { lat: sc.c2.lat, lon: sc.c2.lon };
+        const c2Html = `<div class="c2-glyph">▣</div><div class="pod-label">${sc.c2.label}</div>`;
+        c2Marker = L.marker([c2LatLon.lat, c2LatLon.lon], { icon: divIcon(c2Html, 'c2', 26, 26) });
+        c2Marker.addTo(layers.c2);
+        pts.push([c2LatLon.lat, c2LatLon.lon]);
+      }
       // soldier
       const sHtml = `<div class="soldier-glyph">★</div><div class="pod-label">${sc.soldier.label}</div>`;
       soldierMarker = L.marker([sc.soldier.lat, sc.soldier.lon], { icon: divIcon(sHtml, 'soldier', 22, 22) });
       soldierMarker.addTo(layers.soldier);
       pts.push([sc.soldier.lat, sc.soldier.lon]);
+      // mesh edges — connect every pair within mesh_radius_m (default 3.5 km).
+      // C&C joins its 4 nearest pods. Edges are thin gray polylines drawn under
+      // the pod markers so the topology stays visible without overpowering.
+      meshGraph = buildMeshGraph(sc.pods, sc.c2 ? { ...sc.c2, lat: c2LatLon.lat, lon: c2LatLon.lon } : null, sc.mesh_radius_m || 3500);
+      for (const [u, v, line] of meshGraph.edges) line.addTo(layers.mesh);
       // include the outermost range ring in the fit so the early-warning view shows the whole defended area
       if (rr.length) {
         const r = Math.max.apply(null, rr);
@@ -124,6 +145,116 @@
       }
       // fit
       map.fitBounds(L.latLngBounds(pts).pad(0.15));
+    }
+
+    function buildMeshGraph(pods, c2, radiusM) {
+      // nodes: pods + optional c2 (c2 uses node_id from JSON, typically 128)
+      const nodes = pods.map(p => ({ id: p.node_id, lat: p.lat, lon: p.lon }));
+      if (c2) nodes.push({ id: c2.node_id, lat: c2.lat, lon: c2.lon, isC2: true });
+      const adj = new Map();
+      for (const n of nodes) adj.set(n.id, new Map());
+      const edges = [];
+      // radius-based connectivity among pods
+      for (let i = 0; i < nodes.length; ++i) {
+        for (let j = i + 1; j < nodes.length; ++j) {
+          const a = nodes[i], b = nodes[j];
+          // C&C handled separately below
+          if (a.isC2 || b.isC2) continue;
+          const d = approxMetres(a.lat, a.lon, b.lat, b.lon);
+          if (d <= radiusM) {
+            const line = L.polyline([[a.lat, a.lon], [b.lat, b.lon]], {
+              color: '#3d6c5c', weight: 1, opacity: 0.42, interactive: false,
+            });
+            edges.push([a.id, b.id, line]);
+            adj.get(a.id).set(b.id, { d, line });
+            adj.get(b.id).set(a.id, { d, line });
+          }
+        }
+      }
+      // C&C: connect to its 4 nearest pods (always link the rear node so packets
+      // can drain even if it's outside the regular mesh radius)
+      if (c2) {
+        const ranked = pods.map(p => ({ id: p.node_id, lat: p.lat, lon: p.lon,
+          d: approxMetres(c2.lat, c2.lon, p.lat, p.lon) }))
+          .sort((a, b) => a.d - b.d)
+          .slice(0, 4);
+        for (const p of ranked) {
+          const line = L.polyline([[c2.lat, c2.lon], [p.lat, p.lon]], {
+            color: '#5a8e7a', weight: 1.2, opacity: 0.55, interactive: false,
+          });
+          edges.push([c2.node_id, p.id, line]);
+          adj.get(c2.node_id).set(p.id, { d: p.d, line });
+          adj.get(p.id).set(c2.node_id, { d: p.d, line });
+        }
+      }
+      return { nodes, adj, edges, c2Id: c2 ? c2.node_id : null };
+    }
+
+    function approxMetres(lat1, lon1, lat2, lon2) {
+      const dlat = (lat2 - lat1) * 111132;
+      const dlon = (lon2 - lon1) * 111320 * Math.cos((lat1 + lat2) * Math.PI / 360);
+      return Math.hypot(dlat, dlon);
+    }
+
+    // Dijkstra: shortest path through mesh edges from podId to C&C.
+    function shortestPathToC2(podId) {
+      if (!meshGraph || meshGraph.c2Id === null) return null;
+      const dest = meshGraph.c2Id;
+      if (podId === dest) return [dest];
+      const dist = new Map();
+      const prev = new Map();
+      const visited = new Set();
+      for (const n of meshGraph.nodes) dist.set(n.id, Infinity);
+      dist.set(podId, 0);
+      while (visited.size < meshGraph.nodes.length) {
+        let u = null;
+        let best = Infinity;
+        for (const [id, d] of dist) {
+          if (!visited.has(id) && d < best) { best = d; u = id; }
+        }
+        if (u === null) break;
+        if (u === dest) break;
+        visited.add(u);
+        const nbrs = meshGraph.adj.get(u);
+        if (!nbrs) continue;
+        for (const [v, edge] of nbrs) {
+          if (visited.has(v)) continue;
+          const alt = dist.get(u) + edge.d;
+          if (alt < dist.get(v)) { dist.set(v, alt); prev.set(v, u); }
+        }
+      }
+      if (!isFinite(dist.get(dest))) return null;
+      const path = [dest];
+      let u = dest;
+      while (prev.has(u)) { u = prev.get(u); path.unshift(u); }
+      return path;
+    }
+
+    // Animate a packet hopping through a mesh path. Each edge highlights for HOP_MS.
+    function animateMeshHop(podId) {
+      const path = shortestPathToC2(podId);
+      if (!path || path.length < 2) return;
+      const HOP_MS = 110;
+      for (let i = 0; i < path.length - 1; ++i) {
+        const u = path[i], v = path[i + 1];
+        setTimeout(() => {
+          const ua = meshGraph.adj.get(u);
+          const edge = ua && ua.get(v);
+          if (!edge) return;
+          const hop = L.polyline(edge.line.getLatLngs(), {
+            color: '#ffd866', weight: 3, opacity: 0.95, interactive: false,
+          }).addTo(layers.meshHop);
+          const start = performance.now();
+          const dur = HOP_MS * 1.4;
+          function step(now) {
+            const t = (now - start) / dur;
+            if (t >= 1) { layers.meshHop.removeLayer(hop); return; }
+            hop.setStyle({ opacity: 0.95 * (1 - t) });
+            requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        }, i * HOP_MS);
+      }
     }
 
     function updateEmitter(id, lat, lon, bearingDeg, label, threatHot) {
@@ -201,10 +332,12 @@
 
     function podMarker(nodeId) { return podMarkers[nodeId]; }
     function soldierLatLon() { return soldierMarker ? soldierMarker.getLatLng() : null; }
+    function c2NodeLatLon() { return c2LatLon; }
 
     return {
       map, setScenario, updateEmitter, clearEmitters,
       pulseRing, loraArrow, showSolve, podMarker, soldierLatLon,
+      c2NodeLatLon, animateMeshHop,
     };
   }
 

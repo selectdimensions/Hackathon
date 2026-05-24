@@ -48,15 +48,19 @@ You can also double-click `demo/index.html`, but **audio fetch via `file://` is 
 
 ## Early-warning scenario (the headline demo)
 
-A 15-pod forward screen in three rows (500 m, 1.5 km, 3 km in front of the soldier). A 5.8 GHz FPV drone enters from 10 km north at 60 km/h, closes to 1 km. The master fires a new `AlertPacket` every time the range crosses a 1 km boundary (and on bearing shifts ≥ 15°), so the soldier hears:
+A **25-pod LoRa mesh** deployed in 5 concentric forward arcs at 1 / 3 / 5 / 7 / 10 km from the soldier — wide enough to triangulate accurately at long range, dense enough for multi-hop relay. Each pod connects to peers within 3.5 km via thin gray lines on the map (the LoRa mesh). A rear **Command-and-Control (C&C) node** at 1.5 km south of the soldier joins its four nearest pods and receives every detection packet via the mesh.
 
-> `CUE_DEG_***` + `CUE_KM_10` … (drone at 10 km) → `CUE_KM_09` → `CUE_KM_08` → … → `CUE_KM_01` (drone at 1 km)
+A 5.8 GHz FPV drone enters from ~10.5 km north at 60 km/h, curves NNE → N → NW → N over the approach, closes to 1 km. As pods detect, packets hop through the mesh edges (yellow flashes) toward C&C. C&C runs **linear-LS hyperbolic multilateration + Gauss-Newton refinement** (`solve_method: "rssi_lsq"`) and fires a new `AlertPacket` each time the range bucket crosses a 1 km boundary OR the bearing shifts ≥ 15°.
 
-That's ten progressively-tightening callouts over the 9 km of approach — the early-warning story the hardware is designed to deliver.
+The soldier hears the full progression:
 
-The master uses **weighted Gauss-Newton RSSI multilateration** (`solve_method: "rssi_lsq"`) on the 15-pod range estimates so the localisation tracks the drone, not the pod cluster centroid. The TDOA + RSSI-centroid stubs from [DataAnalysisLog/triangulate.py](../DataAnalysisLog/triangulate.py) remain as fallbacks for parity with the Python harness.
+> `CUE_DEG_***` + `CUE_KM_10` (drone at 10 km) → `CUE_KM_09` → `CUE_KM_08` → … → `CUE_KM_01` (1 km)
 
-Sim runs at **10×** real time (~54 s real for a 9-minute approach). Audio is **FIFO-queued** — every km cue plays to completion in order; cues never get clipped by a fresher alert.
+plus extra bearing alerts when the drone changes heading. All cues are FIFO-queued and play to completion — no clipping.
+
+**Accuracy** (verified vs. ground truth across 10 → 1 km test positions): localisation error 22–111 m, bearing error 0.1–3.1°. Every km-bucket transition fires the correct `dist_NN.mp3` clip; every 15°+ heading change fires the correct `deg_NNN.mp3` clip.
+
+Sim runs at **10×** real time so the 9-minute approach plays in ~54 s real.
 
 ## Audio cue mapping
 
