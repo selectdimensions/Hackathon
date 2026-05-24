@@ -16,7 +16,12 @@ namespace rftm {
 //   0x20-0x2F  Threat class
 //   0x30-0x3F  Time-to-impact
 //   0x40-0x4F  Comms recommendations
+//   0x50-0x5F  Fine-grained bearing (30° steps, MP3 navigation library)
+//   0x60-0x6F  Fine-grained distance (km, MP3 navigation library)
 //   0xF0-0xFF  System
+//
+// 0x00-0x4F and 0xF0-0xFF resolve to UserNotification/clips/*.wav (8 kHz mono).
+// 0x50-0x6F resolve to AudioClips/<lang>/*.mp3 (espeak-ng/Piper TTS, en + fr).
 enum CueId : uint8_t {
   CUE_NONE             = 0x00,
   CUE_BEAR_N           = 0x01,
@@ -55,6 +60,32 @@ enum CueId : uint8_t {
   CUE_SYS_GPS_LOST     = 0xF1,
   CUE_SYS_BATTERY_LOW  = 0xF2,
   CUE_SYS_ALL_CLEAR    = 0xF3,
+
+  // Fine-grained bearing (every 30°). MP3 library under AudioClips/<lang>/.
+  CUE_DEG_030          = 0x50,
+  CUE_DEG_060          = 0x51,
+  CUE_DEG_090          = 0x52,
+  CUE_DEG_120          = 0x53,
+  CUE_DEG_150          = 0x54,
+  CUE_DEG_180          = 0x55,
+  CUE_DEG_210          = 0x56,
+  CUE_DEG_240          = 0x57,
+  CUE_DEG_270          = 0x58,
+  CUE_DEG_300          = 0x59,
+  CUE_DEG_330          = 0x5A,
+  CUE_DEG_360          = 0x5B,
+
+  // Fine-grained distance (kilometres). MP3 library under AudioClips/<lang>/.
+  CUE_KM_01            = 0x60,
+  CUE_KM_02            = 0x61,
+  CUE_KM_03            = 0x62,
+  CUE_KM_04            = 0x63,
+  CUE_KM_05            = 0x64,
+  CUE_KM_06            = 0x65,
+  CUE_KM_07            = 0x66,
+  CUE_KM_08            = 0x67,
+  CUE_KM_09            = 0x68,
+  CUE_KM_10            = 0x69,
 };
 
 // Filename table. Soldier looks up via cue_id_to_filename(cue_id).
@@ -96,6 +127,30 @@ static const CueEntry CUE_TABLE[] = {
   {CUE_SYS_GPS_LOST,      "sys_gps_lost.wav"},
   {CUE_SYS_BATTERY_LOW,   "sys_battery_low.wav"},
   {CUE_SYS_ALL_CLEAR,     "sys_all_clear.wav"},
+  // 0x50-0x5F: AudioClips/<lang>/deg_*.mp3
+  {CUE_DEG_030,           "deg_030.mp3"},
+  {CUE_DEG_060,           "deg_060.mp3"},
+  {CUE_DEG_090,           "deg_090.mp3"},
+  {CUE_DEG_120,           "deg_120.mp3"},
+  {CUE_DEG_150,           "deg_150.mp3"},
+  {CUE_DEG_180,           "deg_180.mp3"},
+  {CUE_DEG_210,           "deg_210.mp3"},
+  {CUE_DEG_240,           "deg_240.mp3"},
+  {CUE_DEG_270,           "deg_270.mp3"},
+  {CUE_DEG_300,           "deg_300.mp3"},
+  {CUE_DEG_330,           "deg_330.mp3"},
+  {CUE_DEG_360,           "deg_360.mp3"},
+  // 0x60-0x6F: AudioClips/<lang>/dist_*.mp3
+  {CUE_KM_01,             "dist_01.mp3"},
+  {CUE_KM_02,             "dist_02.mp3"},
+  {CUE_KM_03,             "dist_03.mp3"},
+  {CUE_KM_04,             "dist_04.mp3"},
+  {CUE_KM_05,             "dist_05.mp3"},
+  {CUE_KM_06,             "dist_06.mp3"},
+  {CUE_KM_07,             "dist_07.mp3"},
+  {CUE_KM_08,             "dist_08.mp3"},
+  {CUE_KM_09,             "dist_09.mp3"},
+  {CUE_KM_10,             "dist_10.mp3"},
 };
 static constexpr size_t CUE_TABLE_LEN = sizeof(CUE_TABLE) / sizeof(CUE_TABLE[0]);
 
@@ -124,6 +179,24 @@ inline uint8_t distance_code_to_cue(uint8_t distance_code) {
     CUE_DIST_FAR, CUE_DIST_VERY_FAR, CUE_DIST_DISTANT, CUE_DIST_DISTANT,
   };
   return map_[distance_code & 0x07];
+}
+
+// Helper: AlertPacket bearing_deg (0..255 = 0..360°) -> nearest 30° MP3 cue.
+// 0° rounds up to CUE_DEG_360 to match the AudioClips naming.
+inline uint8_t bearing_deg_to_step30_cue(uint8_t bearing_deg) {
+  uint16_t deg = static_cast<uint16_t>(bearing_deg) * 360u / 256u;  // 0..359
+  uint8_t step = static_cast<uint8_t>((deg + 15u) / 30u);           // 0..12
+  if (step == 0) step = 12;
+  if (step > 12) step = 12;
+  return static_cast<uint8_t>(CUE_DEG_030 + (step - 1));
+}
+
+// Helper: metres -> nearest 1-km MP3 cue (clamped 1..10 km).
+inline uint8_t meters_to_km_cue(uint16_t meters) {
+  uint16_t km = (static_cast<uint32_t>(meters) + 500u) / 1000u;
+  if (km < 1) km = 1;
+  if (km > 10) km = 10;
+  return static_cast<uint8_t>(CUE_KM_01 + (km - 1));
 }
 
 }  // namespace rftm

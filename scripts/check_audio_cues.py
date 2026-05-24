@@ -76,6 +76,12 @@ def main() -> int:
     )
     p.add_argument("--clips", default="UserNotification/clips", type=Path)
     p.add_argument(
+        "--audioclips",
+        default="AudioClips",
+        type=Path,
+        help="Root of MP3 navigation library (must contain en/ and fr/ subdirs)",
+    )
+    p.add_argument(
         "--skip-format",
         action="store_true",
         help="Skip ffprobe sample-rate/channel/bit-depth check",
@@ -99,34 +105,53 @@ def main() -> int:
     for entry in only_in_manifest:
         errs.append(f"in manifest but not {args.header.name}: {entry}")
 
-    # 2. manifest -> file. Two modes:
+    # 2. manifest -> file. Split by extension:
+    #    - *.wav  -> UserNotification/clips/   (8 kHz mono, soldier-node LittleFS)
+    #    - *.mp3  -> AudioClips/<en|fr>/        (TTS navigation library)
+    #
+    # WAV side has two modes:
     #    - scaffold state (0 clips committed): pass with a note; the audio team
     #      hasn't generated clips yet. The manifest is the source of truth that
     #      the team will fill against.
     #    - populated state (>=1 clip committed): enforce that every manifest
     #      entry has a clip, and no orphan clips exist.
-    referenced_files = {fn for _, fn in manifest_set}
-    if args.clips.exists():
-        actual_files = {p.name for p in args.clips.glob("*.wav")}
-    else:
-        actual_files = set()
+    wav_referenced = {fn for _, fn in manifest_set if fn.lower().endswith(".wav")}
+    mp3_referenced = {fn for _, fn in manifest_set if fn.lower().endswith(".mp3")}
 
-    if len(actual_files) == 0:
+    if args.clips.exists():
+        wav_actual = {p.name for p in args.clips.glob("*.wav")}
+    else:
+        wav_actual = set()
+
+    if len(wav_actual) == 0:
         print(
-            f"## audio-cue-curator: clips/ is empty — scaffold state, deferring strict checks. "
-            f"({len(referenced_files)} cues declared in manifest, awaiting WAV generation.)"
+            f"## audio-cue-curator: clips/ is empty — scaffold state, deferring strict WAV checks. "
+            f"({len(wav_referenced)} WAV cues declared in manifest, awaiting WAV generation.)"
         )
     else:
-        missing = referenced_files - actual_files
-        orphans = actual_files - referenced_files
+        missing = wav_referenced - wav_actual
+        orphans = wav_actual - wav_referenced
         for fn in sorted(missing):
             errs.append(f"manifest references {fn} but clips/{fn} is missing")
         for fn in sorted(orphans):
             errs.append(f"clips/{fn} is orphan (not referenced in manifest)")
 
+    # MP3 side: every referenced MP3 must exist in BOTH en/ and fr/. Orphans warn.
+    for lang in ("en", "fr"):
+        lang_dir = args.audioclips / lang
+        if not lang_dir.exists():
+            if mp3_referenced:
+                errs.append(f"{lang_dir} missing but manifest references {len(mp3_referenced)} MP3 cues")
+            continue
+        actual = {p.name for p in lang_dir.glob("*.mp3")}
+        for fn in sorted(mp3_referenced - actual):
+            errs.append(f"manifest references {fn} but {lang_dir}/{fn} is missing")
+        for fn in sorted(actual - mp3_referenced):
+            errs.append(f"{lang_dir}/{fn} is orphan (not referenced in manifest)")
+
     # 3. WAV format
     if not args.skip_format and shutil.which("ffprobe"):
-        for fn in sorted(actual_files):
+        for fn in sorted(wav_actual):
             info = ffprobe_wav(args.clips / fn)
             if info is None:
                 errs.append(f"ffprobe failed on clips/{fn}")
