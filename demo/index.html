@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>RF-Threat Mesh — interactive demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/demo.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">RF-Threat Mesh<span class="brand-sub">interactive demo</span></div>
+    <div class="controls">
+      <label for="scenario-select">scenario</label>
+      <select id="scenario-select"></select>
+      <button id="btn-play" class="btn primary">Play</button>
+      <button id="btn-reset" class="btn">Reset</button>
+      <button id="btn-download" class="btn" title="Download canonical ndjson (log_format.md v1)">⬇ ndjson</button>
+      <span class="clock" id="clock">0.0 s</span>
+    </div>
+  </header>
+
+  <div class="scenario-desc" id="scenario-desc"></div>
+
+  <section class="pipeline-wrap">
+    <div id="pipeline" class="pipeline"></div>
+  </section>
+
+  <main class="grid">
+    <section class="map-wrap">
+      <div id="map"></div>
+    </section>
+
+    <aside class="side">
+      <div class="panel" id="audio-panel"></div>
+      <div class="panel evlog-panel">
+        <header class="panel-h">master ndjson event log</header>
+        <div id="event-log" class="evlog"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="legend">
+    <span class="lg pod-helper">● helper pod</span>
+    <span class="lg pod-live">● BladeRF / Pi (live)</span>
+    <span class="lg soldier">★ soldier</span>
+    <span class="lg drone">✈ emitter</span>
+    <span class="lg solve">● triangulated</span>
+  </footer>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="vendor/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
+  <script src="vendor/leaflet-realtime/leaflet-realtime.js"></script>
+  <script src="js/protocol.js"></script>
+  <script src="js/sim/geo.js"></script>
+  <script src="js/sim/scenario.js"></script>
+  <script src="js/sim/sensorPod.js"></script>
+  <script src="js/sim/masterNode.js"></script>
+  <script src="js/sim/soldierNode.js"></script>
+  <script src="js/ui/map.js"></script>
+  <script src="js/ui/pipeline.js"></script>
+  <script src="js/ui/eventLog.js"></script>
+  <script src="js/ui/audioPanel.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

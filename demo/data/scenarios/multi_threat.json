@@ -1,0 +1,44 @@
+{
+  "id": "multi_threat",
+  "label": "Multi-threat — FPV + jammer",
+  "description": "Concurrent 5.8 GHz FPV drone (moving NE→SW) and 2.4 GHz control jammer (static, 500 m N). Master must produce two alerts on different bands.",
+  "anchor": { "lat": 50.0875, "lon": 14.4213 },
+  "pods": [
+    { "node_id": 1, "label": "Pod A — BladeRF / Pi (live)", "is_live": true,  "band": 5, "has_gps_pps": true, "eastM": -180, "northM": 120 },
+    { "node_id": 2, "label": "Pod B — helper",              "is_live": false, "band": 5, "has_gps_pps": true, "eastM":  180, "northM": 120 },
+    { "node_id": 3, "label": "Pod C — helper",              "is_live": false, "band": 5, "has_gps_pps": true, "eastM":    0, "northM": -160 },
+    { "node_id": 4, "label": "Pod D — 2.4 GHz",             "is_live": false, "band": 4, "has_gps_pps": true, "eastM": -120, "northM":  -80 },
+    { "node_id": 5, "label": "Pod E — 2.4 GHz",             "is_live": false, "band": 4, "has_gps_pps": true, "eastM":  120, "northM":  -80 },
+    { "node_id": 6, "label": "Pod F — 2.4 GHz",             "is_live": false, "band": 4, "has_gps_pps": true, "eastM":    0, "northM":  200 }
+  ],
+  "soldier": { "node_id": 160, "label": "Soldier 1", "eastM": 0, "northM": 0 },
+  "emitters": [
+    {
+      "id": "fpv_drone",
+      "label": "5.8 GHz FPV drone",
+      "band": 5,
+      "threat_class": 1,
+      "tx_power_dbm": 23,
+      "path_loss_n": 2.8,
+      "freq_hopper": false,
+      "path": [
+        { "t_ms": 0,     "eastM": 700, "northM": 700 },
+        { "t_ms": 25000, "eastM": -500, "northM": -400 }
+      ]
+    },
+    {
+      "id": "control_jammer",
+      "label": "2.4 GHz control jammer",
+      "band": 4,
+      "threat_class": 4,
+      "tx_power_dbm": 27,
+      "path_loss_n": 2.6,
+      "freq_hopper": true,
+      "path": [
+        { "t_ms": 0,     "eastM": 0, "northM": 500 },
+        { "t_ms": 25000, "eastM": 0, "northM": 500 }
+      ]
+    }
+  ],
+  "duration_ms": 26000
+}

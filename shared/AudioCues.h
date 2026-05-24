@@ -16,8 +16,8 @@ namespace rftm {
 //   0x20-0x2F  Threat class
 //   0x30-0x3F  Time-to-impact
 //   0x40-0x4F  Comms recommendations
-//   0x50-0x5F  Fine-grained bearing (30° steps, MP3 navigation library)
-//   0x60-0x6F  Fine-grained distance (km, MP3 navigation library)
+//   0x50-0x5B  Fine-grained bearing (30° steps, MP3 navigation library)
+//   0x60-0x69  Fine-grained distance (km, MP3 navigation library)
 //   0xF0-0xFF  System
 //
 // 0x00-0x4F and 0xF0-0xFF resolve to UserNotification/clips/*.wav (8 kHz mono).
