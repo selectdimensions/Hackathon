@@ -55,6 +55,8 @@
     const buffer = [];           // recent detects awaiting solve
     const seenSeq = new Set();   // dedup (node_id, seq)
     let lastAlertMs = 0;
+    // per-band state for "alert when km bucket changes" rule
+    const lastAlertedByBand = new Map();  // band_id -> { km, bearingByte, ms }
 
     function ingestDetect(ev) {
       const key = `${ev.node_id}:${ev.seq}`;
@@ -88,11 +90,9 @@
         for (const e of evs) if (!byPod.has(e.node_id)) byPod.set(e.node_id, e);
         const distinct = Array.from(byPod.values());
         if (distinct.length < cfg.minPodsForTdoa) continue;
-        if (nowMs - lastAlertMs < 800) continue; // throttle
         const est = solveTdoa(distinct) || solveRssi(distinct);
         if (!est) continue;
-        lastAlertMs = nowMs;
-        emitAlert(nowMs, distinct, est);
+        maybeEmitAlert(nowMs, bandId, distinct, est);
         // consume detections from buffer once solved
         for (const e of distinct) {
           const i = buffer.indexOf(e);
@@ -101,12 +101,28 @@
       }
     }
 
-    function emitAlert(nowMs, detects, est) {
-      const sol = detects[0];
+    // Fire an alert only when the situation has materially changed: km bucket
+    // crossed, bearing shifted > ~15°, or a fallback heartbeat after 4 s.
+    function maybeEmitAlert(nowMs, bandId, detects, est) {
       const soldier = cfg.soldierLatLon;
       const bearing = bearingDeg(soldier.lat, soldier.lon, est.lat, est.lon);
       const rangeM = haversineM(soldier.lat, soldier.lon, est.lat, est.lon);
       const bearingByte = P.bearing360ToByte(bearing);
+      const km = Math.max(1, Math.min(10, Math.round(rangeM / 1000)));
+      const last = lastAlertedByBand.get(bandId);
+      const kmChanged = !last || last.km !== km;
+      const bearingDelta = last ? Math.abs(((bearingByte - last.bearingByte + 128) & 0xFF) - 128) : 999;
+      const heartbeat = !last || (nowMs - last.ms) > 4000;
+      const debounceOk = !last || (nowMs - last.ms) > 400;
+      if (!debounceOk) return;
+      if (!(kmChanged || bearingDelta > 11 || heartbeat)) return;
+      lastAlertedByBand.set(bandId, { km, bearingByte, ms: nowMs });
+      lastAlertMs = nowMs;
+      emitAlert(nowMs, detects, est, bearing, rangeM, bearingByte);
+    }
+
+    function emitAlert(nowMs, detects, est, bearing, rangeM, bearingByte) {
+      const sol = detects[0];
       const distCode = P.distanceCodeFromMeters(rangeM);
       const threat = classifyThreat(sol.band_id, 0);
       const cueId = pickPrimaryCue(bearingByte);
@@ -125,7 +141,7 @@
         distance_label: P.DistanceLabels[distCode],
         threat_class: threat,
         threat_label: P.ThreatLabel[threat],
-        tti_sec: 0xFF,
+        tti_sec: Math.min(254, Math.max(0, Math.round(rangeM / 16.67))),  // 60 km/h closing-speed assumption
         confidence: Math.max(40, Math.min(95, 100 - Math.round(residual / 5))),
         cue_id: cueId,
         cue_label: P.CueTable[cueId] ? P.CueTable[cueId].name : 'UNKNOWN',

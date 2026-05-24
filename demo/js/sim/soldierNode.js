@@ -20,6 +20,7 @@
     const bufferCache = new Map(); // url -> AudioBuffer
     let muted = false;
     let lastAlert = null;
+    let activeSources = []; // in-flight AudioBufferSourceNodes — cancelled on next alert
 
     function ensureCtx() {
       if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -45,6 +46,11 @@
       return [headingCue, kmCue];
     }
 
+    function cancelActive() {
+      for (const s of activeSources) { try { s.stop(); } catch (_) {} }
+      activeSources = [];
+    }
+
     async function handleAlert(alert) {
       lastAlert = alert;
       if (muted) {
@@ -52,13 +58,19 @@
         return;
       }
       ensureCtx();
+      cancelActive();
       const cues = pickCueSequence(alert);
       const urls = cues.map(c => P.cueAssetUrl(c, cfg.lang)).filter(Boolean);
       if (!urls.length) return;
       cfg.onCueStart({ alert, cues });
       try {
         const buffers = await Promise.all(urls.map(loadBuffer));
+        // alert may have been superseded while we were decoding; stale handler
+        // would still cancel us via cancelActive on the next call, but bail
+        // early to avoid scheduling sources we'll immediately stop.
+        if (alert !== lastAlert) return;
         let t = ctx.currentTime + 0.05;
+        const mine = [];
         for (let i = 0; i < buffers.length; ++i) {
           const src = ctx.createBufferSource();
           src.buffer = buffers[i];
@@ -66,9 +78,14 @@
           src.start(t);
           t += buffers[i].duration;
           if (i === buffers.length - 1) {
-            src.onended = () => cfg.onCueEnd({ alert, cues });
+            src.onended = () => {
+              activeSources = activeSources.filter(s => s !== src && !mine.includes(s));
+              if (alert === lastAlert) cfg.onCueEnd({ alert, cues });
+            };
           }
+          mine.push(src);
         }
+        activeSources = mine;
       } catch (e) {
         console.error('soldier audio:', e);
         cfg.onCueEnd({ alert, cues, error: String(e) });

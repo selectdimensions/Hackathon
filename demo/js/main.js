@@ -7,6 +7,7 @@
 
 (function () {
   const SCENARIOS = [
+    { id: 'early_warning', url: 'data/scenarios/early_warning.json' },
     { id: 'fpv_incursion', url: 'data/scenarios/fpv_incursion.json' },
     { id: 'gnss_jammer',   url: 'data/scenarios/gnss_jammer.json' },
     { id: 'multi_threat',  url: 'data/scenarios/multi_threat.json' },
@@ -62,6 +63,7 @@
     pods = scenario.pods.map(p => window.Sim.makeSensorPod({
       nodeId: p.node_id, label: p.label, lat: p.lat, lon: p.lon,
       band: p.band, isLive: p.is_live, hasGpsPps: p.has_gps_pps !== false,
+      detectThresholdDbm: p.detect_threshold_dbm,
     }));
     master = window.Sim.makeMasterNode({
       soldierLatLon: { lat: scenario.soldier.lat, lon: scenario.soldier.lon },
@@ -92,8 +94,12 @@
 
   function tick() {
     const nowMs = Date.now();
-    tElapsedMs += TICK_MS;
-    document.getElementById('clock').textContent = (tElapsedMs / 1000).toFixed(1) + ' s';
+    const scale = scenario.time_scale || 1;
+    tElapsedMs += TICK_MS * scale;
+    const simSec = (tElapsedMs / 1000).toFixed(1);
+    const realSec = ((tElapsedMs / scale) / 1000).toFixed(1);
+    document.getElementById('clock').textContent =
+      scale > 1 ? `sim ${simSec}s (real ${realSec}s · ${scale}×)` : `${simSec} s`;
 
     // advance emitters, move markers
     const baseUnixUs = tStartMs * 1000;

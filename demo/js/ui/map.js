@@ -64,6 +64,7 @@
     L.control.scale({ imperial: false }).addTo(map);
 
     const layers = {
+      rangeRings: L.layerGroup().addTo(map),
       pods:    L.layerGroup().addTo(map),
       drone:   L.layerGroup().addTo(map),
       solve:   L.layerGroup().addTo(map),
@@ -85,6 +86,18 @@
       solveMarker = null; solveRing = null;
 
       const pts = [];
+      // range rings around soldier (early-warning visualisation)
+      const rr = sc.range_rings_m || [];
+      for (const radius of rr) {
+        L.circle([sc.soldier.lat, sc.soldier.lon], {
+          radius, color: '#3d6c5c', weight: 1, opacity: 0.55,
+          fillOpacity: 0, dashArray: '2,4', interactive: false,
+        }).addTo(layers.rangeRings);
+        const lbl = L.marker([sc.soldier.lat + radius / 111132, sc.soldier.lon], {
+          icon: divIcon(`<div class="range-label">${radius >= 1000 ? (radius/1000)+' km' : radius+' m'}</div>`, 'range', 1, 1),
+          interactive: false,
+        }).addTo(layers.rangeRings);
+      }
       // pods
       for (const p of sc.pods) {
         const klass = p.is_live ? 'pod live' : 'pod helper';
@@ -99,8 +112,14 @@
       soldierMarker = L.marker([sc.soldier.lat, sc.soldier.lon], { icon: divIcon(sHtml, 'soldier', 22, 22) });
       soldierMarker.addTo(layers.soldier);
       pts.push([sc.soldier.lat, sc.soldier.lon]);
+      // include the outermost range ring in the fit so the early-warning view shows the whole defended area
+      if (rr.length) {
+        const r = Math.max.apply(null, rr);
+        pts.push([sc.soldier.lat + r / 111132, sc.soldier.lon]);
+        pts.push([sc.soldier.lat - r / 111132, sc.soldier.lon]);
+      }
       // fit
-      map.fitBounds(L.latLngBounds(pts).pad(0.6));
+      map.fitBounds(L.latLngBounds(pts).pad(0.15));
     }
 
     function updateEmitter(id, lat, lon, bearingDeg, label, threatHot) {

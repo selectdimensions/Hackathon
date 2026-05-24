@@ -1,0 +1,43 @@
+{
+  "id": "early_warning",
+  "label": "Early warning — 15-pod forward screen, drone 10 km → 1 km @ 60 km/h",
+  "description": "Defensive screen of 15 BladeRF/SX1262 pods deployed forward of the soldier in three rows (500 m, 1.5 km, 3 km). 5.8 GHz FPV drone enters from 10 km north at 60 km/h and closes to 1 km. The master fires a new alert every time the range bucket crosses a 1-km boundary, demonstrating that the soldier gets ~9 minutes of audio warnings (deg/dist phrases) before impact. Simulation runs at 20× real time so a 9-minute scenario plays in ~27 s.",
+  "anchor": { "lat": 50.0875, "lon": 14.4213 },
+  "time_scale": 20,
+  "range_rings_m": [1000, 2000, 5000, 10000],
+  "pods": [
+    { "node_id":  1, "label": "F1 — fwd L",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -1000, "northM":  500 },
+    { "node_id":  2, "label": "F2 — fwd LC",  "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  -500, "northM":  500 },
+    { "node_id":  3, "label": "F3 — fwd C",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":     0, "northM":  500 },
+    { "node_id":  4, "label": "F4 — fwd RC",  "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":   500, "northM":  500 },
+    { "node_id":  5, "label": "F5 — fwd R",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  1000, "northM":  500 },
+    { "node_id":  6, "label": "M1 — mid L",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -1500, "northM": 1500 },
+    { "node_id":  7, "label": "M2 — mid LC",  "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  -750, "northM": 1500 },
+    { "node_id":  8, "label": "M3 — BladeRF / Pi (live)", "is_live": true, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -115, "eastM": 0, "northM": 1500 },
+    { "node_id":  9, "label": "M4 — mid RC",  "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":   750, "northM": 1500 },
+    { "node_id": 10, "label": "M5 — mid R",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  1500, "northM": 1500 },
+    { "node_id": 11, "label": "L1 — far L",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -2000, "northM": 3000 },
+    { "node_id": 12, "label": "L2 — far LC",  "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -1000, "northM": 3000 },
+    { "node_id": 13, "label": "L3 — far C",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":     0, "northM": 3000 },
+    { "node_id": 14, "label": "L4 — far RC",  "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  1000, "northM": 3000 },
+    { "node_id": 15, "label": "L5 — far R",   "is_live": false, "band": 5, "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  2000, "northM": 3000 }
+  ],
+  "soldier": { "node_id": 160, "label": "Soldier 1", "eastM": 0, "northM": 0 },
+  "emitters": [
+    {
+      "id": "fpv_drone",
+      "label": "5.8 GHz FPV drone (60 km/h)",
+      "band": 5,
+      "threat_class": 1,
+      "tx_power_dbm": 27,
+      "path_loss_n": 2.2,
+      "freq_hopper": false,
+      "path": [
+        { "t_ms":      0, "eastM": 1000, "northM": 10500 },
+        { "t_ms": 270000, "eastM":  300, "northM":  5000 },
+        { "t_ms": 540000, "eastM":   50, "northM":  1000 }
+      ]
+    }
+  ],
+  "duration_ms": 600000
+}

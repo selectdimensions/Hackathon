@@ -31,8 +31,8 @@ You can also double-click `demo/index.html`, but **audio fetch via `file://` is 
 
 | Control | Effect |
 |---|---|
-| **scenario** dropdown | Pick `fpv_incursion`, `gnss_jammer`, or `multi_threat`. |
-| **Play / Pause** | Advance the simulation clock at real time (100 ms tick). |
+| **scenario** dropdown | Pick `early_warning` (default), `fpv_incursion`, `gnss_jammer`, or `multi_threat`. |
+| **Play / Pause** | Advance the simulation clock. Most scenarios run at real time (100 ms tick); `early_warning` runs at 20× so a 9-minute approach plays in ~27 s. The clock readout shows both sim and real time. |
 | **Reset** | Rewind to t=0, clear markers and event log. |
 | **⬇ ndjson** | Download the master-node event log as canonical ndjson — feed to [`DataAnalysisLog/parse_log.py`](../DataAnalysisLog/parse_log.py) or [`DataAnalysisLog/triangulate.py`](../DataAnalysisLog/triangulate.py). |
 | **EN / FR** (audio panel) | Switch between [AudioClips/en/](../AudioClips/en/) and [AudioClips/fr/](../AudioClips/fr/) navigation clips. |
@@ -41,10 +41,18 @@ You can also double-click `demo/index.html`, but **audio fetch via `file://` is 
 
 ## What you see
 
-- **Map** — pods (blue dots, yellow = live), soldier (green ★), drone/jammer (red ✈ / ▲, pulses as it gets close), triangulation result (red circle with residual ring + red arrow to soldier).
-- **Pipeline strip** above the map — each stage flashes as the corresponding event fires. Blue = `detect`, red = `alert`.
+- **Map** — pods (blue dots, yellow = live), soldier (green ★), drone/jammer (red ✈ / ▲, pulses as it gets close), triangulation result (red circle with residual ring + red arrow to soldier). In `early_warning`, dashed range rings at 1 / 2 / 5 / 10 km show the defended area.
+- **Pipeline strip** above the map — each stage flashes as the corresponding event fires. Blue = `detect`, red = `alert`. BladeRF / Pi / ESP32-C6 light up only for the live pod; helper pods skip straight to the LoRa stage.
 - **Event log** (right) — every line is one canonical ndjson event matching log_format.md v1. Detects are blue, alerts are red.
-- **Audio panel** (right top) — shows the cue sequence the soldier is playing (e.g. `CUE_DEG_030 + CUE_KM_05`) with a level-meter pulse on each alert.
+- **Audio panel** (right top) — shows the cue sequence the soldier is playing (e.g. `CUE_DEG_030 + CUE_KM_05`) with a level-meter pulse on each alert. Newer alerts cancel in-flight playback so the soldier always hears the freshest range, not a stack.
+
+## Early-warning scenario (the headline demo)
+
+A 15-pod forward screen in three rows (500 m, 1.5 km, 3 km in front of the soldier). A 5.8 GHz FPV drone enters from 10 km north at 60 km/h, closes to 1 km. The master fires a new `AlertPacket` every time the range crosses a 1 km boundary (and on bearing shifts ≥ 15°), so the soldier hears:
+
+> `CUE_DEG_***` + `CUE_KM_10` … (drone at 10 km) → `CUE_KM_09` → `CUE_KM_08` → … → `CUE_KM_01` (drone at 1 km)
+
+That's ten progressively-tightening callouts over the 9 km of approach — the early-warning story the hardware is designed to deliver.
 
 ## Audio cue mapping
 

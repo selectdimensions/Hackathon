@@ -15,8 +15,9 @@
   }
 
   function makeSensorPod(cfg) {
-    // cfg: {nodeId, label, lat, lon, band, isLive, hasGpsPps}
+    // cfg: {nodeId, label, lat, lon, band, isLive, hasGpsPps, detectThresholdDbm}
     const state = {
+      detectThresholdDbm: -110,
       ...cfg,
       seq: 0,
       battery: 80 + Math.floor(Math.random() * 20),
@@ -27,7 +28,7 @@
       if (!emitter || emitter.bandId !== state.band) return null;
       const rangeM = haversineM(state.lat, state.lon, emitter.lat, emitter.lon);
       const rssi = rssiAtRangeDbm(rangeM, emitter.txPowerDbm, emitter.pathLossN);
-      if (rssi < -85) return null;
+      if (rssi < state.detectThresholdDbm) return null;
       // simulate PPS — true emission time + propagation delay (3.3 ns/m)
       const propUs = rangeM / 3e8 * 1e6;
       const ppsTimestampUs = Math.floor(emitter.emitUnixUs + propUs);
