@@ -93,6 +93,21 @@ def load_scenario(path: Path) -> dict:
         for k, v in layout.items():
             if k not in raw:
                 raw[k] = v
+    # Guardrail: every emitter's (tx_power_dbm, path_loss_n) MUST match
+    # BAND_PATHLOSS for its band. Mismatch silently inflates localisation
+    # error in the solver. Caller fails fast if drift is detected.
+    for em in raw.get("emitters", []):
+        ref = BAND_PATHLOSS.get(em["band"])
+        if ref is None:
+            raise ValueError(f"{path.name}: emitter {em.get('id')} uses unknown band {em['band']}")
+        if abs(em["tx_power_dbm"] - ref["tx_power"]) > 0.01:
+            raise ValueError(
+                f"{path.name}: emitter {em.get('id')} tx_power_dbm={em['tx_power_dbm']} "
+                f"!= BAND_PATHLOSS[band {em['band']}].tx_power={ref['tx_power']}")
+        if abs(em["path_loss_n"] - ref["n"]) > 0.01:
+            raise ValueError(
+                f"{path.name}: emitter {em.get('id')} path_loss_n={em['path_loss_n']} "
+                f"!= BAND_PATHLOSS[band {em['band']}].n={ref['n']}")
     # resolve pod / soldier / c2 / emitter positions
     anchor = raw["anchor"]
     for p in raw["pods"]:
