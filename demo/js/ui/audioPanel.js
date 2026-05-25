@@ -24,25 +24,6 @@
     const meter = root.querySelector('#audio-meter');
     const mctx = meter.getContext('2d');
     let muted = false;
-    let analyser = null;
-
-    function ensureAnalyser() {
-      if (!soldier.ctx) return null;
-      if (analyser) return analyser;
-      analyser = soldier.ctx.createAnalyser();
-      analyser.fftSize = 256;
-      // tap the destination by inserting a gain pass-through
-      const tap = soldier.ctx.createGain();
-      tap.connect(analyser);
-      analyser.connect(soldier.ctx.destination);
-      // monkey-patch: redirect future bufferSources via tap is intrusive.
-      // Simpler: AnalyserNode reads master output is not possible in standard
-      // WebAudio; instead we expose `connectAnalyser` and let soldierNode
-      // wire each source through this tap. (Done by setting destination on
-      // the soldier via this returned node.) For the demo we just animate a
-      // bar tied to alert energy — see drawIdleMeter.
-      return analyser;
-    }
 
     function drawIdleMeter(level) {
       mctx.clearRect(0, 0, meter.width, meter.height);

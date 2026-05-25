@@ -1,29 +1,26 @@
 {
   "id": "fpv_incursion",
-  "label": "FPV drone — NE approach (5.8 GHz)",
-  "description": "5.8 GHz FPV video carrier approaching from the northeast, 600 m → 80 m over 20 s. All three pods have GPS-PPS lock, so TDOA succeeds.",
-  "anchor": { "lat": 50.0875, "lon": 14.4213 },
-  "pods": [
-    { "node_id": 1, "label": "Pod A — BladeRF / Pi (live)", "is_live": true,  "band": 5, "has_gps_pps": true, "eastM": -180, "northM": 120 },
-    { "node_id": 2, "label": "Pod B — helper",              "is_live": false, "band": 5, "has_gps_pps": true, "eastM":  180, "northM": 120 },
-    { "node_id": 3, "label": "Pod C — helper",              "is_live": false, "band": 5, "has_gps_pps": true, "eastM":    0, "northM": -160 }
-  ],
-  "soldier": { "node_id": 160, "label": "Soldier 1", "eastM": 0, "northM": 0 },
+  "label": "FPV incursion — W-shape lateral weaving 10→1 km",
+  "description": "Same 25-pod mesh + C&C as early_warning. 5.8 GHz FPV drone enters from 10 km out and flies a tight W-shape (left-right-left-right) as it closes — hammers the bearing cue space hard while km counts down. Tests heading-change responsiveness end-to-end.",
+  "layout_ref": "_layout.json",
+  "time_scale": 10,
   "emitters": [
     {
       "id": "fpv_drone",
-      "label": "5.8 GHz FPV drone",
+      "label": "5.8 GHz FPV drone (W-shape)",
       "band": 5,
       "threat_class": 1,
-      "tx_power_dbm": 23,
-      "path_loss_n": 2.8,
+      "tx_power_dbm": 27,
+      "path_loss_n": 2.2,
       "freq_hopper": false,
       "path": [
-        { "t_ms": 0,     "eastM": 750, "northM": 750 },
-        { "t_ms": 10000, "eastM": 420, "northM": 480 },
-        { "t_ms": 20000, "eastM":  80, "northM": 120 }
+        { "t_ms":      0, "eastM":  1500, "northM": 10000 },
+        { "t_ms": 120000, "eastM": -3500, "northM":  7500 },
+        { "t_ms": 240000, "eastM":  3500, "northM":  5500 },
+        { "t_ms": 360000, "eastM": -3500, "northM":  3500 },
+        { "t_ms": 480000, "eastM":  1000, "northM":  1500 }
       ]
     }
   ],
-  "duration_ms": 22000
+  "duration_ms": 540000
 }

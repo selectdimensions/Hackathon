@@ -15,17 +15,20 @@
   }
 
   function makeSensorPod(cfg) {
-    // cfg: {nodeId, label, lat, lon, band, isLive, hasGpsPps, detectThresholdDbm}
+    // cfg: {nodeId, label, lat, lon, bands[]|band, isLive, hasGpsPps, detectThresholdDbm}
+    // Accept either `bands` (multi-band array) or legacy `band` (single int).
+    const bands = Array.isArray(cfg.bands) ? cfg.bands.slice() : (cfg.band !== undefined ? [cfg.band] : []);
     const state = {
       detectThresholdDbm: -110,
       ...cfg,
+      bands,
       seq: 0,
       battery: 80 + Math.floor(Math.random() * 20),
       noiseFloorDbm: -98 + Math.floor(Math.random() * 4 - 2),
     };
 
     function poll(nowMs, emitter) {
-      if (!emitter || emitter.bandId !== state.band) return null;
+      if (!emitter || !state.bands.includes(emitter.bandId)) return null;
       const rangeM = haversineM(state.lat, state.lon, emitter.lat, emitter.lon);
       const rssi = rssiAtRangeDbm(rangeM, emitter.txPowerDbm, emitter.pathLossN);
       if (rssi < state.detectThresholdDbm) return null;
@@ -39,8 +42,8 @@
         ts_unix_ms: nowMs,
         event: 'detect',
         node_id: state.nodeId,
-        band_id: state.band,
-        band_name: BandLabel[state.band],
+        band_id: emitter.bandId,
+        band_name: BandLabel[emitter.bandId],
         pps_timestamp_us: state.hasGpsPps ? ppsTimestampUs : 0,
         rssi_dbm: Math.round(rssi),
         snr_db: Math.max(0, Math.min(63, Math.round(rssi - state.noiseFloorDbm))),

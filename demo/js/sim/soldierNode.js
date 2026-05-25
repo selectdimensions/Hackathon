@@ -99,8 +99,13 @@
       if (muted) { queue.length = 0; }
     }
     function replayLast() { if (lastAlert) handleAlert(lastAlert); }
+    function flush() {
+      queue.length = 0;
+      lastAlert = null;
+      cfg.onCueEnd({ flushed: true });
+    }
 
-    return { handleAlert, setLang, setMuted, replayLast,
+    return { handleAlert, setLang, setMuted, replayLast, flush,
              get ctx() { return ctx; },
              get queueDepth() { return queue.length + (playing ? 1 : 0); } };
   }

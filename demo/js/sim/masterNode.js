@@ -140,6 +140,8 @@
     let lastAlertMs = 0;
     // per-band state for "alert when km bucket changes" rule
     const lastAlertedByBand = new Map();  // band_id -> { km, bearingByte, ms }
+    // per-band recent solve history for closing-speed (tti_sec) estimation
+    const solveHistoryByBand = new Map(); // band_id -> [{ lat, lon, rangeM, ms }]
 
     function ingestDetect(ev) {
       const key = `${ev.node_id}:${ev.seq}`;
@@ -207,6 +209,22 @@
     function emitAlert(nowMs, detects, est, bearing, rangeM, bearingByte) {
       const sol = detects[0];
       const distCode = P.distanceCodeFromMeters(rangeM);
+      // Closing-speed estimate from recent solve history (per band).
+      // Positive closing means range is decreasing; tti_sec = range / max(closing, 1).
+      // If too little history or emitter is stationary/receding, return 0xFF (unknown).
+      const hist = solveHistoryByBand.get(sol.band_id) || [];
+      hist.push({ rangeM, ms: nowMs });
+      while (hist.length > 5) hist.shift();
+      solveHistoryByBand.set(sol.band_id, hist);
+      let ttiSec = 0xFF;
+      if (hist.length >= 2) {
+        const oldest = hist[0];
+        const dtSec = (nowMs - oldest.ms) / 1000;
+        const closingMs = (oldest.rangeM - rangeM) / Math.max(dtSec, 0.1);
+        if (closingMs > 0.5 && rangeM > 0) {
+          ttiSec = Math.min(254, Math.max(0, Math.round(rangeM / closingMs)));
+        }
+      }
       const threat = classifyThreat(sol.band_id, 0);
       const cueId = pickPrimaryCue(bearingByte);
       // residual: distance from each pod's measurement back-projected. For the
@@ -224,7 +242,7 @@
         distance_label: P.DistanceLabels[distCode],
         threat_class: threat,
         threat_label: P.ThreatLabel[threat],
-        tti_sec: Math.min(254, Math.max(0, Math.round(rangeM / 16.67))),  // 60 km/h closing-speed assumption
+        tti_sec: ttiSec,
         confidence: Math.max(40, Math.min(95, 100 - Math.round(residual / 5))),
         cue_id: cueId,
         cue_label: P.CueTable[cueId] ? P.CueTable[cueId].name : 'UNKNOWN',

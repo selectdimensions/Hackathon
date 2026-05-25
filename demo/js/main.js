@@ -15,6 +15,7 @@
   const TICK_MS = 100;
 
   let mapUI, pipelineUI, eventLogUI, audioPanel;
+  let inspector = null;
   let scenario = null;
   let pods = [];
   let master = null;
@@ -34,6 +35,17 @@
       onCueEnd:   (e) => audioPanel.onCueEnd(e),
     });
     audioPanel = window.UI.makeAudioPanelUI('audio-panel', soldier);
+
+    // Inspector panel + structured DEMO console logging via ?debug=1
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('debug') && window.UI.makeInspector) {
+      inspector = window.UI.makeInspector({
+        scenarioGetter: () => scenario,
+        soldier,
+        getElapsedSimMs: () => tElapsedMs,
+        getScale: () => (scenario && scenario.time_scale) || 1,
+      });
+    }
 
     // populate scenario picker
     const sel = document.getElementById('scenario-select');
@@ -62,7 +74,8 @@
   function buildSim() {
     pods = scenario.pods.map(p => window.Sim.makeSensorPod({
       nodeId: p.node_id, label: p.label, lat: p.lat, lon: p.lon,
-      band: p.band, isLive: p.is_live, hasGpsPps: p.has_gps_pps !== false,
+      bands: p.bands, band: p.band,
+      isLive: p.is_live, hasGpsPps: p.has_gps_pps !== false,
       detectThresholdDbm: p.detect_threshold_dbm,
     }));
     master = window.Sim.makeMasterNode({
@@ -76,6 +89,7 @@
 
   function handleMasterEvent(ev) {
     eventLogUI.append(ev);
+    if (inspector) inspector.onEvent(ev);
     if (ev.event === 'detect') {
       pipelineUI.onDetect(ev);
       const pod = scenario.pods.find(p => p.node_id === ev.node_id);
@@ -136,7 +150,7 @@
       // each pod polls — throttled with per-pod stagger
       for (let i = 0; i < pods.length; ++i) {
         const pod = pods[i];
-        if (pod.state.band !== state.bandId) continue;
+        if (!pod.state.bands.includes(state.bandId)) continue;
         const last = lastPolledByPod.get(pod.state.nodeId) || 0;
         const stagger = (pod.state.nodeId * 37) % POD_POLL_MS;
         if (nowMs - last < POD_POLL_MS - stagger / POD_POLL_MS * 50) continue;
@@ -168,11 +182,14 @@
   function reset() {
     pause();
     tElapsedMs = 0;
+    lastPolledByPod.clear();
+    lastHopByPod.clear();
     document.getElementById('clock').textContent = '0.0 s';
     eventLogUI.clear();
     pipelineUI.reset();
     mapUI.setScenario(scenario);
     mapUI.clearEmitters();
+    if (soldier && soldier.flush) soldier.flush();
     buildSim();
   }
 

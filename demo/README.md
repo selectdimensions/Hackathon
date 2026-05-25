@@ -46,6 +46,45 @@ You can also double-click `demo/index.html`, but **audio fetch via `file://` is 
 - **Event log** (right) — every line is one canonical ndjson event matching log_format.md v1. Detects are blue, alerts are red.
 - **Audio panel** (right top) — shows the cue sequence the soldier is playing (e.g. `CUE_DEG_030 + CUE_KM_05`) with a level-meter pulse on each alert. Newer alerts cancel in-flight playback so the soldier always hears the freshest range, not a stack.
 
+## Scenario lineup (all four use the same 25-pod mesh + C&C)
+
+All four scenarios reference [demo/data/scenarios/_layout.json](data/scenarios/_layout.json) — the same 25-pod 5-arc mesh out to 10 km plus a rear C&C node at 1.5 km south of the soldier. Each pod is multi-band (3 / 4 / 5 = GNSS L1, 2.4 GHz, 5.8 GHz). Only the drone path differs.
+
+| Scenario | Shape | Threat | Exercises |
+|---|---|---|---|
+| `early_warning` | Big **S** | 5.8 GHz FPV drone 10→1 km | km 10→1 + bearings sweep NNE↔NNW twice |
+| `fpv_incursion` | Hard **W** | 5.8 GHz FPV drone 10→1 km | bearings hammer DEG_330 ↔ DEG_030 |
+| `gnss_jammer` | Relocating static | GNSS L1 jammer (6 km E → 8 km NW) | re-triangulation on relocation |
+| `multi_threat` | **V** + static | FPV V-shape + 2.4 GHz jammer | interleaved-band alerts |
+
+## Verification
+
+Two equivalent surfaces — pick whichever fits your context:
+
+```bash
+# Headless deterministic audit (CI-friendly, exits 0/1)
+python scripts/demo_audit.py
+```
+
+```
+# Browser test harness — open http://localhost:8000/demo/test.html
+# Click "Run all 4 scenarios". Table shows PASS / FAIL per scenario plus a downloadable JSON report.
+```
+
+Both use the same per-scenario expectations: minimum alert count, expected km bucket set, distinct bearing cues, max localisation error. The browser test exercises the *actual* JS code path; the Python script is a parallel implementation that catches drift between the two.
+
+## Debug inspector (`?debug=1`)
+
+Open `http://localhost:8000/demo/?debug=1` for a live state panel:
+
+- `t_sim / t_real / scale`
+- `pods detecting`, `detects` count
+- `truth.<emitter>` — ground-truth lat/lon, range, bearing
+- `solve.last` — master estimate, method (`rssi_lsq`), residual, error vs. truth, km cue, tti
+- `audio.queue` depth
+
+`[⬇ snapshot]` downloads the full state + last 200 events as JSON. Every event is also emitted as a structured `[DEMO]` console.log line — greppable.
+
 ## Early-warning scenario (the headline demo)
 
 A **25-pod LoRa mesh** deployed in 5 concentric forward arcs at 1 / 3 / 5 / 7 / 10 km from the soldier — wide enough to triangulate accurately at long range, dense enough for multi-hop relay. Each pod connects to peers within 3.5 km via thin gray lines on the map (the LoRa mesh). A rear **Command-and-Control (C&C) node** at 1.5 km south of the soldier joins its four nearest pods and receives every detection packet via the mesh.

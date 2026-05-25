@@ -9,6 +9,18 @@
     const r = await fetch(url);
     if (!r.ok) throw new Error('scenario fetch ' + url + ' -> ' + r.status);
     const raw = await r.json();
+    // If the scenario references a shared layout (pods_ref / c2_ref / etc.)
+    // fetch and merge — scenario fields win on conflict.
+    if (raw.layout_ref) {
+      const baseUrl = url.replace(/[^/]+$/, '') + raw.layout_ref;
+      const lr = await fetch(baseUrl);
+      if (!lr.ok) throw new Error('layout fetch ' + baseUrl + ' -> ' + lr.status);
+      const layout = await lr.json();
+      // shallow merge, scenario overrides layout
+      for (const k of Object.keys(layout)) {
+        if (raw[k] === undefined) raw[k] = layout[k];
+      }
+    }
     return resolve(raw);
   }
 

@@ -230,31 +230,39 @@
       return path;
     }
 
-    // Animate a packet hopping through a mesh path. Each edge highlights for HOP_MS.
+    // Animate a packet hopping through a mesh path. Single in-flight slot —
+    // additional requests during an animation are dropped (not queued) so 25
+    // pods firing detections at 5 Hz don't spawn hundreds of pending timers.
+    let hopAnimInFlight = false;
     function animateMeshHop(podId) {
+      if (hopAnimInFlight) return;
       const path = shortestPathToC2(podId);
       if (!path || path.length < 2) return;
+      hopAnimInFlight = true;
       const HOP_MS = 110;
-      for (let i = 0; i < path.length - 1; ++i) {
+      let i = 0;
+      function nextHop() {
+        if (i >= path.length - 1) { hopAnimInFlight = false; return; }
         const u = path[i], v = path[i + 1];
-        setTimeout(() => {
-          const ua = meshGraph.adj.get(u);
-          const edge = ua && ua.get(v);
-          if (!edge) return;
-          const hop = L.polyline(edge.line.getLatLngs(), {
-            color: '#ffd866', weight: 3, opacity: 0.95, interactive: false,
-          }).addTo(layers.meshHop);
-          const start = performance.now();
-          const dur = HOP_MS * 1.4;
-          function step(now) {
-            const t = (now - start) / dur;
-            if (t >= 1) { layers.meshHop.removeLayer(hop); return; }
-            hop.setStyle({ opacity: 0.95 * (1 - t) });
-            requestAnimationFrame(step);
-          }
-          requestAnimationFrame(step);
-        }, i * HOP_MS);
+        i++;
+        const ua = meshGraph.adj.get(u);
+        const edge = ua && ua.get(v);
+        if (!edge) { setTimeout(nextHop, HOP_MS); return; }
+        const hop = L.polyline(edge.line.getLatLngs(), {
+          color: '#ffd866', weight: 3, opacity: 0.95, interactive: false,
+        }).addTo(layers.meshHop);
+        const start = performance.now();
+        const dur = HOP_MS * 1.4;
+        function fade(now) {
+          const t = (now - start) / dur;
+          if (t >= 1) { layers.meshHop.removeLayer(hop); return; }
+          hop.setStyle({ opacity: 0.95 * (1 - t) });
+          requestAnimationFrame(fade);
+        }
+        requestAnimationFrame(fade);
+        setTimeout(nextHop, HOP_MS);
       }
+      nextHop();
     }
 
     function updateEmitter(id, lat, lon, bearingDeg, label, threatHot) {
