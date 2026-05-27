@@ -1,0 +1,6 @@
+{
+  "scenario": "fpv_incursion (demo)",
+  "lat": 50.088240,
+  "lon": 14.422380,
+  "notes": "Emitter position at t≈20s in demo/data/scenarios/fpv_incursion.json (last waypoint, ENU 80E/120N from anchor 50.0875,14.4213)."
+}

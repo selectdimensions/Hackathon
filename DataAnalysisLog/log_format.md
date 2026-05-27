@@ -62,6 +62,8 @@ The master node emits **newline-delimited JSON** (ndjson) over USB serial at 115
 }
 ```
 
+`solve_method` is one of `"rssi_lsq"` (weighted Gauss-Newton multilateration on inverse-path-loss ranges — the demo's primary), `"tdoa"` (time-difference-of-arrival, requires PPS on every contributing pod), or `"rssi"` (RSSI-power-weighted centroid fallback). Parsers should treat unknown values as opaque pass-throughs.
+
 ## `rekey` schema
 
 ```json

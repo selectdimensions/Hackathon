@@ -1,0 +1,26 @@
+{
+  "id": "fpv_incursion",
+  "label": "FPV incursion — W-shape lateral weaving 10→1 km",
+  "description": "Same 25-pod mesh + C&C as early_warning. 5.8 GHz FPV drone enters from 10 km out and flies a tight W-shape (left-right-left-right) as it closes — hammers the bearing cue space hard while km counts down. Tests heading-change responsiveness end-to-end.",
+  "layout_ref": "_layout.json",
+  "time_scale": 10,
+  "emitters": [
+    {
+      "id": "fpv_drone",
+      "label": "5.8 GHz FPV drone (W-shape)",
+      "band": 5,
+      "threat_class": 1,
+      "tx_power_dbm": 27,
+      "path_loss_n": 2.2,
+      "freq_hopper": false,
+      "path": [
+        { "t_ms":      0, "eastM":  1500, "northM": 10000 },
+        { "t_ms": 120000, "eastM": -3500, "northM":  7500 },
+        { "t_ms": 240000, "eastM":  3500, "northM":  5500 },
+        { "t_ms": 360000, "eastM": -3500, "northM":  3500 },
+        { "t_ms": 480000, "eastM":  1000, "northM":  1500 }
+      ]
+    }
+  ],
+  "duration_ms": 540000
+}

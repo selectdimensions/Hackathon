@@ -41,3 +41,11 @@ python triangulate.py --fixture fixtures/tdoa_3pod_clear.jsonl --truth fixtures/
 
 - `.claude/agents/triangulation-validator.md` — runs `triangulate.py` against canonical fixtures and asserts error thresholds.
 - `.claude/agents/eu-duty-cycle-auditor.md` — runs `parse_log.py --report-duty-cycle` and flags any node exceeding the EU 36 s/hour budget.
+
+## Related: demo-side audit
+
+`../scripts/demo_audit.py` is a parallel verifier specifically for the browser demo's scenarios — it mirrors the JS multilateration solver in pure Python and asserts per-scenario expectations (km bucket set, distinct bearing cues, max localisation error). Runs over `../demo/data/scenarios/*.json`, exits 0/1. Separate from this folder's `triangulate.py` (which remains a centroid stub against canonical fixtures); see [../demo/README.md](../demo/README.md) for the demo verification surfaces.
+
+## Fixtures committed
+
+- `fixtures/fpv_incursion_demo.jsonl` + `.truth.json` — a single-window ndjson snapshot demonstrating the canonical v1 schema as emitted by the demo's master simulator. Used as a smoke-test fixture for `triangulate.py`.

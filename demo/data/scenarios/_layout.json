@@ -1,0 +1,43 @@
+{
+  "comment": "Shared 25-pod mesh + C&C definition referenced by every scenario via pods_ref / c2_ref. Each pod listens on multiple bands (5.8 GHz FPV, 2.4 GHz control, GNSS L1) — matches BladeRF capability. R2-N is the live BladeRF/Pi node.",
+  "anchor": { "lat": 50.0875, "lon": 14.4213 },
+  "range_rings_m": [1000, 3000, 5000, 7000, 10000],
+  "mesh_radius_m": 3500,
+  "c2": {
+    "node_id": 128,
+    "label": "C&C node",
+    "eastM": 0, "northM": -1500
+  },
+  "soldier": { "node_id": 160, "label": "Soldier 1", "eastM": 0, "northM": 0 },
+  "pods": [
+    { "node_id":  1, "label": "R1-NW (1 km)",   "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  -707, "northM":  707 },
+    { "node_id":  2, "label": "R1-N (1 km)",    "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":     0, "northM": 1000 },
+    { "node_id":  3, "label": "R1-NE (1 km)",   "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":   707, "northM":  707 },
+
+    { "node_id":  4, "label": "R2-W (3 km)",    "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -3000, "northM":    0 },
+    { "node_id":  5, "label": "R2-NW (3 km)",   "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -2121, "northM": 2121 },
+    { "node_id":  6, "label": "R2-N — BladeRF / Pi (live)", "is_live": true, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -115, "eastM": 0, "northM": 3000 },
+    { "node_id":  7, "label": "R2-NE (3 km)",   "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  2121, "northM": 2121 },
+    { "node_id":  8, "label": "R2-E (3 km)",    "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  3000, "northM":    0 },
+
+    { "node_id":  9, "label": "R3-WNW (5 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -4330, "northM": 2500 },
+    { "node_id": 10, "label": "R3-NNW (5 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -2500, "northM": 4330 },
+    { "node_id": 11, "label": "R3-N (5 km)",    "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":     0, "northM": 5000 },
+    { "node_id": 12, "label": "R3-NNE (5 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  2500, "northM": 4330 },
+    { "node_id": 13, "label": "R3-ENE (5 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  4330, "northM": 2500 },
+
+    { "node_id": 14, "label": "R4-WNW (7 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -6762, "northM": 1812 },
+    { "node_id": 15, "label": "R4-NW (7 km)",   "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -4950, "northM": 4950 },
+    { "node_id": 16, "label": "R4-NNW (7 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -1812, "northM": 6762 },
+    { "node_id": 17, "label": "R4-NNE (7 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  1812, "northM": 6762 },
+    { "node_id": 18, "label": "R4-NE (7 km)",   "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  4950, "northM": 4950 },
+    { "node_id": 19, "label": "R4-ENE (7 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  6762, "northM": 1812 },
+
+    { "node_id": 20, "label": "R5-WNW (10 km)", "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -9659, "northM": 2588 },
+    { "node_id": 21, "label": "R5-NW (10 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -7660, "northM": 6428 },
+    { "node_id": 22, "label": "R5-NNW (10 km)", "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM": -4226, "northM": 9063 },
+    { "node_id": 23, "label": "R5-NNE (10 km)", "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  4226, "northM": 9063 },
+    { "node_id": 24, "label": "R5-NE (10 km)",  "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  7660, "northM": 6428 },
+    { "node_id": 25, "label": "R5-ENE (10 km)", "is_live": false, "bands": [3, 4, 5], "has_gps_pps": true, "detect_threshold_dbm": -110, "eastM":  9659, "northM": 2588 }
+  ]
+}
