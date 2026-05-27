@@ -1,0 +1,95 @@
+/* TENEBRIS — design tokens
+ * Single source of truth for color, spacing, radius, typography, motion.
+ * Imported by demo/css/demo.css, demo/test.html, and any future surface.
+ * Update HERE; everything downstream tracks.
+ *
+ * Spec: branding/Readme.md — sections 3 (color), 4 (typography), 6 (iconography).
+ */
+
+:root {
+  /* ----- Neutral ramp (Night Shadow / Drift Gray) ----- */
+  --tb-gray-50:  #F9FAFB;
+  --tb-gray-100: #F3F4F6;
+  --tb-gray-200: #E5E7EB;
+  --tb-gray-300: #D1D5DB;
+  --tb-gray-400: #9CA3AF;
+  --tb-gray-500: #6B7280;
+  --tb-gray-600: #4B5563;
+  --tb-gray-700: #374151;
+  --tb-gray-800: #1F2937;
+  --tb-gray-900: #111827;
+  --tb-gray-950: #030712;
+
+  /* ----- Brand palette ----- */
+  --tb-primary:  var(--tb-gray-950);              /* Night Shadow — deepest BG */
+  --tb-secondary: var(--tb-gray-400);             /* Drift Gray — body text */
+  --tb-accent:   #00A9E2;                         /* Aether Blue — interactive / data */
+  --tb-accent-oklch: oklch(74.43% 0.134 191.01);
+  --tb-warn:     #DC2626;                         /* Trip Red — threat alert */
+  --tb-success:  #166534;                         /* PPS Green — sync confirmed */
+  --tb-success-bright: #10B981;                   /* For dark-mode emphasis */
+
+  /* ----- Semantic UI tokens (dark-mode default) ----- */
+  --bg-app:        var(--tb-primary);
+  --bg-elevated:   var(--tb-gray-900);
+  --bg-panel:      var(--tb-gray-900);
+  --bg-sunken:     #02050A;                       /* deeper than gray-950 for inset wells */
+  --border-muted:  var(--tb-gray-800);
+  --border-strong: var(--tb-gray-700);
+  --text-primary:  var(--tb-gray-100);
+  --text-secondary: var(--tb-gray-400);
+  --text-dim:      var(--tb-gray-500);
+  --text-on-accent: var(--tb-gray-950);
+  --interactive:   var(--tb-accent);
+  --interactive-hover: #1DC0F7;                   /* slightly brighter Aether */
+  --threat:        var(--tb-warn);
+  --threat-dim:    #7F1D1D;                       /* muted warn for inert states */
+  --signal:        var(--tb-accent);              /* mesh / detect signal pulse */
+
+  /* ----- Spacing scale (4px base, 8pt grid) ----- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* ----- Radius ----- */
+  --r-sm: 3px;
+  --r-md: 6px;
+  --r-lg: 10px;
+
+  /* ----- Shadow (subtle, never bombastic) ----- */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.55);
+  --shadow-glow-signal: 0 0 12px rgba(0, 169, 226, 0.55);
+  --shadow-glow-threat: 0 0 14px rgba(220, 38, 38, 0.65);
+
+  /* ----- Typography ----- */
+  --font-display: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  --fs-xs:  11px;
+  --fs-sm:  12px;
+  --fs-md:  13px;
+  --fs-lg:  15px;
+  --fs-xl:  18px;
+  --fs-2xl: 22px;
+  --fs-3xl: 30px;
+
+  --lh-tight: 1.2;
+  --lh-body:  1.5;
+
+  /* tracked uppercase utility (display labels) */
+  --letter-display: 0.06em;
+  --letter-tagline: 0.16em;
+
+  /* ----- Motion ----- */
+  --t-fast:   120ms;
+  --t-normal: 240ms;
+  --t-slow:   480ms;
+  --ease:     cubic-bezier(0.4, 0, 0.2, 1);
+}

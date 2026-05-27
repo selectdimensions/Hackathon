@@ -6,44 +6,40 @@
 // offline — no PNG basemap committed to the repo.
 
 (function (root) {
+  // Procedural Night Shadow basemap. Two greys + a 32-px brand grid.
+  // No tile-coord debug labels — this is a product surface now.
+  // Colors read live from CSS custom properties so brand updates flow through.
   function tacticalGridLayer() {
+    const cs = getComputedStyle(document.documentElement);
+    const baseHex = (cs.getPropertyValue('--bg-sunken') || '#02050A').trim();
+    const lineRgb = (cs.getPropertyValue('--tb-gray-700') || '#374151').trim();
+
+    function hexToRgb(hex) {
+      const m = hex.replace('#','').match(/^([0-9a-f]{6})$/i);
+      if (!m) return { r: 2, g: 5, b: 10 };
+      const n = parseInt(m[1], 16);
+      return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+    }
+    const base = hexToRgb(baseHex);
+    const grid = hexToRgb(lineRgb);
+
     const layer = L.GridLayer.extend({
       createTile: function (coords) {
         const t = document.createElement('canvas');
-        t.width = 256;
-        t.height = 256;
+        t.width = 256; t.height = 256;
         const g = t.getContext('2d');
-        // base — gradient dark green / grey, modulated by tile coords for variety
-        const seed = (coords.x * 73856093) ^ (coords.y * 19349663) ^ (coords.z * 83492791);
-        const r = ((seed >>> 0) % 13) - 6;
-        g.fillStyle = `rgb(${22 + r}, ${38 + r}, ${30 + r})`;
+        // very subtle per-tile luminance variation so flat areas don't stripe at zoom edges
+        const seed = ((coords.x * 73856093) ^ (coords.y * 19349663) ^ (coords.z * 83492791)) >>> 0;
+        const j = (seed % 7) - 3;
+        g.fillStyle = `rgb(${base.r + j}, ${base.g + j}, ${base.b + j})`;
         g.fillRect(0, 0, 256, 256);
-        // subtle blobby noise
-        g.globalAlpha = 0.06;
-        for (let i = 0; i < 12; ++i) {
-          const x = ((seed + i * 17) >>> 0) % 256;
-          const y = ((seed + i * 31) >>> 0) % 256;
-          const radius = 30 + (((seed + i * 53) >>> 0) % 40);
-          const grad = g.createRadialGradient(x, y, 0, x, y, radius);
-          grad.addColorStop(0, '#3a7050');
-          grad.addColorStop(1, 'rgba(0,0,0,0)');
-          g.fillStyle = grad;
-          g.beginPath();
-          g.arc(x, y, radius, 0, Math.PI * 2);
-          g.fill();
-        }
-        g.globalAlpha = 1;
-        // 32px grid
-        g.strokeStyle = 'rgba(120, 200, 160, 0.18)';
+        // 32-px brand grid, faint
+        g.strokeStyle = `rgba(${grid.r}, ${grid.g}, ${grid.b}, 0.28)`;
         g.lineWidth = 1;
         for (let i = 0; i <= 256; i += 32) {
-          g.beginPath(); g.moveTo(i, 0);   g.lineTo(i, 256); g.stroke();
-          g.beginPath(); g.moveTo(0, i);   g.lineTo(256, i); g.stroke();
+          g.beginPath(); g.moveTo(i + 0.5, 0); g.lineTo(i + 0.5, 256); g.stroke();
+          g.beginPath(); g.moveTo(0, i + 0.5); g.lineTo(256, i + 0.5); g.stroke();
         }
-        // tile coord label (faint)
-        g.fillStyle = 'rgba(150, 210, 180, 0.35)';
-        g.font = '10px monospace';
-        g.fillText(`${coords.x},${coords.y} z${coords.z}`, 4, 12);
         return t;
       }
     });
@@ -53,6 +49,27 @@
   function divIcon(html, klass, w, h) {
     return L.divIcon({ html, className: 'demo-icon ' + (klass || ''), iconSize: [w, h], iconAnchor: [w / 2, h / 2] });
   }
+
+  // Read brand colors live from CSS custom properties — anywhere we'd
+  // otherwise hard-code a hex, go through this so token updates propagate.
+  // Caches once per Leaflet init (basemap reads the same vars at construction).
+  const BRAND = (function () {
+    const cs = getComputedStyle(document.documentElement);
+    function v(name, fallback) {
+      const x = cs.getPropertyValue(name).trim();
+      return x || fallback;
+    }
+    return {
+      accent:     v('--tb-accent',         '#00A9E2'),
+      threat:     v('--tb-warn',           '#DC2626'),
+      success:    v('--tb-success-bright', '#10B981'),
+      meshMuted:  v('--tb-gray-700',       '#374151'),
+      meshC2:     v('--tb-gray-500',       '#6B7280'),
+      hopHigh:    '#FCD34D',                 // brand-aligned amber for hop pulse
+      ring:       v('--tb-gray-600',       '#4B5563'),
+      arrowDim:   v('--tb-gray-500',       '#6B7280'),
+    };
+  })();
 
   function makeMapUI(containerId) {
     const map = L.map(containerId, {
@@ -98,7 +115,7 @@
       const rr = sc.range_rings_m || [];
       for (const radius of rr) {
         L.circle([sc.soldier.lat, sc.soldier.lon], {
-          radius, color: '#3d6c5c', weight: 1, opacity: 0.55,
+          radius, color: BRAND.ring, weight: 1, opacity: 0.55,
           fillOpacity: 0, dashArray: '2,4', interactive: false,
         }).addTo(layers.rangeRings);
         const lbl = L.marker([sc.soldier.lat + radius / 111132, sc.soldier.lon], {
@@ -163,7 +180,7 @@
           const d = approxMetres(a.lat, a.lon, b.lat, b.lon);
           if (d <= radiusM) {
             const line = L.polyline([[a.lat, a.lon], [b.lat, b.lon]], {
-              color: '#3d6c5c', weight: 1, opacity: 0.42, interactive: false,
+              color: BRAND.meshMuted, weight: 1, opacity: 0.45, interactive: false,
             });
             edges.push([a.id, b.id, line]);
             adj.get(a.id).set(b.id, { d, line });
@@ -180,7 +197,7 @@
           .slice(0, 4);
         for (const p of ranked) {
           const line = L.polyline([[c2.lat, c2.lon], [p.lat, p.lon]], {
-            color: '#5a8e7a', weight: 1.2, opacity: 0.55, interactive: false,
+            color: BRAND.meshC2, weight: 1.3, opacity: 0.6, interactive: false,
           });
           edges.push([c2.node_id, p.id, line]);
           adj.get(c2.node_id).set(p.id, { d: p.d, line });
@@ -249,7 +266,7 @@
         const edge = ua && ua.get(v);
         if (!edge) { setTimeout(nextHop, HOP_MS); return; }
         const hop = L.polyline(edge.line.getLatLngs(), {
-          color: '#ffd866', weight: 3, opacity: 0.95, interactive: false,
+          color: BRAND.hopHigh, weight: 3, opacity: 0.95, interactive: false,
         }).addTo(layers.meshHop);
         const start = performance.now();
         const dur = HOP_MS * 1.4;
@@ -293,7 +310,7 @@
 
     function pulseRing(lat, lon, color) {
       const c = L.circle([lat, lon], {
-        radius: 5, color: color || '#5fa9ff', weight: 2, fillOpacity: 0,
+        radius: 5, color: color || BRAND.accent, weight: 2, fillOpacity: 0,
       }).addTo(layers.rings);
       const start = performance.now();
       function step(now) {
@@ -308,7 +325,7 @@
 
     function loraArrow(from, to, color) {
       const line = L.polyline([from, to], {
-        color: color || '#ffcc66', weight: 2, opacity: 0.0,
+        color: color || BRAND.accent, weight: 2, opacity: 0.0,
         dashArray: '6,8',
       }).addTo(layers.arrows);
       const start = performance.now();
@@ -324,16 +341,18 @@
     function showSolve(lat, lon, residualM, soldierLatLon) {
       layers.solve.clearLayers();
       solveMarker = L.circleMarker([lat, lon], {
-        radius: 8, color: '#ff5050', fillColor: '#ff5050', fillOpacity: 0.55, weight: 2,
+        radius: 7, color: BRAND.threat, fillColor: BRAND.threat,
+        fillOpacity: 0.5, weight: 2,
       }).addTo(layers.solve);
       solveRing = L.circle([lat, lon], {
         radius: Math.max(residualM, 20),
-        color: '#ff5050', weight: 1, opacity: 0.7, fillOpacity: 0.08, dashArray: '3,4',
+        color: BRAND.threat, weight: 1, opacity: 0.6,
+        fillOpacity: 0.05, dashArray: '3,4',
       }).addTo(layers.solve);
       if (soldierLatLon) {
-        const line = L.polyline(
+        L.polyline(
           [[soldierLatLon.lat, soldierLatLon.lon], [lat, lon]],
-          { color: '#ff5050', weight: 2, opacity: 0.6, dashArray: '4,6' }
+          { color: BRAND.threat, weight: 2, opacity: 0.55, dashArray: '4,6' }
         ).addTo(layers.solve);
       }
     }

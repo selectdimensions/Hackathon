@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TENEBRIS monogram, 1-bit silkscreen-safe (branding/Readme.md §5).
+     Single white fill. Stroke widths >= 0.35 mm at intended print size.
+     Use currentColor in CSS to recolor: fill="currentColor". -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Tenebris monogram">
+  <g fill="currentColor">
+    <path d="M 28 8 L 8 48 L 18 68 L 3 88 L 28 100 L 58 100 L 78 88 L 68 68 L 88 48 L 68 8 Z"/>
+    <path d="M 50 18 a 8 8 0 0 1 0 16 a 8 8 0 0 1 0 -16 Z M 50 38 L 40 43 L 40 68 L 50 78 L 60 68 L 60 43 Z"/>
+  </g>
+</svg>

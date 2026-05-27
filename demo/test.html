@@ -2,34 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>RF-Threat Mesh — demo test harness</title>
+  <title>TENEBRIS — test harness</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="../branding/tenebris_favicon_sheet.png">
+  <link rel="stylesheet" href="../branding/web/fonts.css">
+  <link rel="stylesheet" href="../branding/web/tokens.css">
   <link rel="stylesheet" href="css/demo.css">
   <style>
-    body { padding: 16px; background: var(--bg); color: var(--ink); font: 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; }
-    h1 { font-size: 18px; margin: 0 0 8px 0; }
-    .sub { color: var(--ink-dim); margin-bottom: 16px; font-size: 13px; }
-    table { border-collapse: collapse; width: 100%; font: 13px ui-monospace, monospace; }
-    th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #1f3631; }
-    th { color: var(--ink-dim); font-weight: 600; }
-    tr.PASS td.result { color: var(--ok); font-weight: 600; }
-    tr.FAIL td.result { color: var(--hot); font-weight: 600; }
-    tr.RUN td.result { color: var(--warn); }
-    .err { color: var(--hot); font-size: 12px; padding-left: 22px; }
-    button { background: #2d6448; color: var(--ink); border: 1px solid #418e64; border-radius: 4px; padding: 7px 14px; font: inherit; cursor: pointer; margin-right: 8px; }
-    button:hover { background: #38805a; }
-    #summary { padding: 8px 12px; background: var(--panel-2); border: 1px solid #1f3631; border-radius: 4px; margin-top: 12px; font-weight: 600; }
-    #summary.PASS { color: var(--ok); }
-    #summary.FAIL { color: var(--hot); }
-    #download-link { display: inline-block; margin-left: 12px; color: var(--accent); }
+    /* test-harness-only layout; colors/typography come from brand tokens */
+    body { padding: var(--sp-5); }
+    .test-h {
+      display: flex; align-items: center; gap: var(--sp-3);
+      margin-bottom: var(--sp-2);
+    }
+    .test-h .brand-mark { width: 26px; height: 26px; color: var(--tb-accent); }
+    .test-h .brand-mark svg { width: 100%; height: 100%; }
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--fs-xl);
+      letter-spacing: var(--letter-display);
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .sub {
+      color: var(--text-secondary);
+      margin-bottom: var(--sp-5);
+      font-size: var(--fs-md);
+      max-width: 720px;
+    }
+    .controls-row { margin-bottom: var(--sp-4); display: flex; gap: var(--sp-2); align-items: center; }
+    table { border-collapse: collapse; width: 100%; font: var(--fs-sm)/1.5 var(--font-mono); }
+    th, td { padding: var(--sp-2) var(--sp-3); text-align: left; border-bottom: 1px solid var(--border-muted); }
+    th {
+      color: var(--text-dim); font-weight: 500;
+      font-family: var(--font-display);
+      font-size: var(--fs-xs);
+      letter-spacing: var(--letter-display);
+      text-transform: uppercase;
+    }
+    tr.PASS td.result { color: var(--tb-success-bright); font-weight: 600; }
+    tr.FAIL td.result { color: var(--tb-warn); font-weight: 600; }
+    tr.RUN td.result { color: #FCD34D; }
+    td.result { font-family: var(--font-display); font-weight: 700; }
+    .err {
+      color: #FCA5A5;
+      font-size: var(--fs-sm);
+      padding-left: var(--sp-5);
+      font-family: var(--font-mono);
+    }
+    #summary {
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-muted);
+      border-radius: var(--r-md);
+      margin-top: var(--sp-4);
+      font-weight: 600;
+      font-family: var(--font-display);
+      letter-spacing: var(--letter-display);
+      text-transform: uppercase;
+    }
+    #summary.PASS { color: var(--tb-success-bright); border-color: var(--tb-success-bright); }
+    #summary.FAIL { color: var(--tb-warn); border-color: var(--tb-warn); }
   </style>
 </head>
 <body>
-  <h1>demo test harness</h1>
-  <div class="sub">Runs each scenario in-process at 100× speed (no map render, no audio playback), captures all events, asserts per-scenario expectations. Same checks as <code>scripts/demo_audit.py</code> but in-browser so we exercise the actual JS.</div>
-  <button id="run">▶ Run all 4 scenarios</button>
-  <button id="download" disabled>⬇ Download report JSON</button>
-  <span id="status"></span>
+  <div class="test-h">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 100 100" fill="currentColor">
+        <path d="M 28 8 L 8 48 L 18 68 L 3 88 L 28 100 L 58 100 L 78 88 L 68 68 L 88 48 L 68 8 Z"/>
+        <path d="M 50 18 a 8 8 0 0 1 0 16 a 8 8 0 0 1 0 -16 Z M 50 38 L 40 43 L 40 68 L 50 78 L 60 68 L 60 43 Z"/>
+      </svg>
+    </span>
+    <h1>Tenebris · test harness</h1>
+  </div>
+  <div class="sub">Runs each scenario in-process at 100× sim speed (no map render, no audio), captures every event, asserts per-scenario expectations. Same checks as <code>scripts/demo_audit.py</code> — but in-browser so the actual JS code path is exercised.</div>
+  <div class="controls-row">
+    <button id="run" class="btn primary">▶ Run all 4 scenarios</button>
+    <button id="download" class="btn" disabled>⬇ Download report JSON</button>
+    <span id="status"></span>
+  </div>
 
   <table id="results">
     <thead>

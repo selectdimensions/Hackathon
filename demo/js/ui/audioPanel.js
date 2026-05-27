@@ -25,6 +25,17 @@
     const mctx = meter.getContext('2d');
     let muted = false;
 
+    // Pull brand colors live so token edits propagate.
+    const cs = getComputedStyle(document.documentElement);
+    const METER_LO = (cs.getPropertyValue('--tb-accent').trim() || '#00A9E2');
+    const METER_HI = (cs.getPropertyValue('--tb-success-bright').trim() || '#10B981');
+
+    function lerpRgb(a, b, t) {
+      function rgb(h) { const n = parseInt(h.replace('#',''), 16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+      const A = rgb(a), B = rgb(b);
+      return `rgb(${A[0]+(B[0]-A[0])*t|0}, ${A[1]+(B[1]-A[1])*t|0}, ${A[2]+(B[2]-A[2])*t|0})`;
+    }
+
     function drawIdleMeter(level) {
       mctx.clearRect(0, 0, meter.width, meter.height);
       const bars = 32;
@@ -32,9 +43,11 @@
       for (let i = 0; i < bars; ++i) {
         const v = level * (0.6 + 0.4 * Math.sin(i / 3 + Date.now() / 200));
         const h = Math.max(2, v * meter.height);
-        mctx.fillStyle = `rgba(${100 + i * 4}, ${200 - i * 2}, 120, 0.9)`;
+        mctx.fillStyle = lerpRgb(METER_LO, METER_HI, i / bars);
+        mctx.globalAlpha = 0.85;
         mctx.fillRect(i * bw + 1, meter.height - h, bw - 2, h);
       }
+      mctx.globalAlpha = 1;
     }
 
     let meterLevel = 0;

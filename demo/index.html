@@ -2,20 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>RF-Threat Mesh — interactive demo</title>
+  <title>TENEBRIS — interactive demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TENEBRIS — counter-drone RF detection mesh. Silent Watch. Passive Defense.">
+  <link rel="icon" type="image/png" href="../branding/tenebris_favicon_sheet.png">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="css/demo.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">RF-Threat Mesh<span class="brand-sub">interactive demo</span></div>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="currentColor">
+          <path d="M 28 8 L 8 48 L 18 68 L 3 88 L 28 100 L 58 100 L 78 88 L 68 68 L 88 48 L 68 8 Z"/>
+          <path d="M 50 18 a 8 8 0 0 1 0 16 a 8 8 0 0 1 0 -16 Z M 50 38 L 40 43 L 40 68 L 50 78 L 60 68 L 60 43 Z"/>
+        </svg>
+      </span>
+      <span class="brand-name">Tenebris</span>
+      <span class="brand-sub">Silent Watch · Passive Defense</span>
+    </div>
     <div class="controls">
       <label for="scenario-select">scenario</label>
       <select id="scenario-select"></select>
       <button id="btn-play" class="btn primary">Play</button>
       <button id="btn-reset" class="btn">Reset</button>
-      <button id="btn-download" class="btn" title="Download canonical ndjson (log_format.md v1)">⬇ ndjson</button>
+      <button id="btn-download" class="btn" title="Download canonical ndjson (DataAnalysisLog/log_format.md v1)">⬇ ndjson</button>
       <span class="clock" id="clock">0.0 s</span>
     </div>
   </header>
@@ -34,20 +45,20 @@
     <aside class="side">
       <div class="panel" id="audio-panel"></div>
       <div class="panel evlog-panel">
-        <header class="panel-h">master ndjson event log</header>
+        <header class="panel-h">C&amp;C ndjson event log</header>
         <div id="event-log" class="evlog"></div>
       </div>
     </aside>
   </main>
 
   <footer class="legend">
-    <span class="lg pod-helper">● helper pod</span>
+    <span class="lg pod-helper">● sensor pod</span>
     <span class="lg pod-live">● BladeRF / Pi (live)</span>
-    <span class="lg mesh">— LoRa mesh link</span>
+    <span class="lg mesh">— mesh link</span>
     <span class="lg c2">▣ C&amp;C</span>
     <span class="lg soldier">★ soldier</span>
     <span class="lg drone">✈ emitter</span>
-    <span class="lg solve">● triangulated</span>
+    <span class="lg solve">● identified</span>
   </footer>
 
   <script src="vendor/leaflet/leaflet.js"></script>

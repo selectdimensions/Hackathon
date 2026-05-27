@@ -94,18 +94,17 @@
       pipelineUI.onDetect(ev);
       const pod = scenario.pods.find(p => p.node_id === ev.node_id);
       if (pod) {
-        mapUI.pulseRing(pod.lat, pod.lon, '#5fa9ff');
+        // pass null -> let map.js use the live BRAND.accent token
+        mapUI.pulseRing(pod.lat, pod.lon, null);
         const now = Date.now();
         const last = lastHopByPod.get(ev.node_id) || 0;
         if (now - last >= MESH_HOP_THROTTLE_MS) {
           lastHopByPod.set(ev.node_id, now);
           if (scenario.c2) {
-            // mesh-routed: packet hops to C&C via shortest path
             mapUI.animateMeshHop(ev.node_id);
           } else {
-            // no C&C declared: direct sensor -> soldier arrow (legacy scenarios)
             const sLatLon = mapUI.soldierLatLon();
-            if (sLatLon) mapUI.loraArrow([pod.lat, pod.lon], sLatLon, '#ffcc66');
+            if (sLatLon) mapUI.loraArrow([pod.lat, pod.lon], sLatLon, null);
           }
         }
       }
@@ -114,11 +113,12 @@
       mapUI.showSolve(ev._emitter_lat, ev._emitter_lon, ev.solve_residual_m, {
         lat: scenario.soldier.lat, lon: scenario.soldier.lon,
       });
-      // alert path: C&C -> soldier (direct LoRa downlink on 868.3 MHz)
       const sLatLon = mapUI.soldierLatLon();
       const c2 = mapUI.c2NodeLatLon();
-      if (sLatLon && c2) mapUI.loraArrow([c2.lat, c2.lon], sLatLon, '#ff5050');
-      else if (sLatLon) mapUI.loraArrow([ev._emitter_lat, ev._emitter_lon], sLatLon, '#ff5050');
+      // Threat-red arrow for the alert downlink — token resolved in map.js
+      const threatColor = getComputedStyle(document.documentElement).getPropertyValue('--tb-warn').trim() || '#DC2626';
+      if (sLatLon && c2) mapUI.loraArrow([c2.lat, c2.lon], sLatLon, threatColor);
+      else if (sLatLon) mapUI.loraArrow([ev._emitter_lat, ev._emitter_lon], sLatLon, threatColor);
       soldier.handleAlert(ev);
     }
   }
