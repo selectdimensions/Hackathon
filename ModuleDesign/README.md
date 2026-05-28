@@ -24,7 +24,7 @@ flowchart TB
 
 ## TODOs (out of scope for v0.1)
 
-- [ ] BOM + cost per pod variant
+- [x] BOM + cost per pod variant → [BOM.md](BOM.md) (v0.2 Pi 5 + SDR pivot)
 - [ ] PCB stackup for the carrier board (4-layer recommended for RF)
 - [ ] Antenna selection per band (PCB trace vs external SMA)
 - [ ] Thermal analysis on the ball enclosure for outdoor 40 °C ambient
