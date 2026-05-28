@@ -105,6 +105,8 @@ Conventional commit prefixes: `feat:`, `fix:`, `proto:` (wire-format change), `c
 
 v0.2 — protocol + brand layer + interactive demo + verification harness landed. Firmware bodies are still skeletons (see TODOs in `LoRaMeshing/MasterNode/MasterNode.ino` and `Rx/SoldierNode/SoldierNode.ino`). Out-of-scope (Motorola DMR/P25 bridge, MQTT/Grafana analytics, TTS pipeline) is documented in [DataAnalysisLog/TODO_motorola_bridge.md](DataAnalysisLog/TODO_motorola_bridge.md).
 
+**Next: Pi 5 + SDR hardware pivot.** The proposed move from AD8318 log-detector pods to Raspberry Pi 5 + RTL-SDR/HackRF pods (with the ESP32-C6 retained as a per-pod LoRa/crypto companion, plus a KrakenSDR at the master site for direction-finding) is specced in [docs/V02_PIVOT.md](docs/V02_PIVOT.md). Its gap analysis against the current scaffold — issues + concrete changes — is tracked in [V02_GAP_ANALYSIS.md](V02_GAP_ANALYSIS.md). (Note: that report labels the pivot "v0.2"; in this repo the v0.2 tag is already the demo/protocol milestone, so treat the SDR pivot as the subsequent hardware track.)
+
 ## Live demo
 
 [demo/](demo/) is a self-contained HTML visualisation of the full pipeline running on a Leaflet map — 25-pod LoRa mesh, command-and-control node, soldier audio cues — driven by simulated `DetectPacket` / `AlertPacket` events whose JSON matches [DataAnalysisLog/log_format.md](DataAnalysisLog/log_format.md) v1. Works fully offline (vendored Leaflet + procedural basemap, vendored fonts). Four scenarios with S / W / V / relocating-static drone paths. See [demo/README.md](demo/README.md).

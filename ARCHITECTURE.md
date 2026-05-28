@@ -1,5 +1,10 @@
 # Architecture
 
+> This document describes the current ESP32-C6 + AD8318 architecture. The proposed
+> **Pi 5 + SDR hardware pivot** (RTL-SDR/HackRF pods + ESP32-C6 companion + KrakenSDR
+> DoA at the master) is specced in [docs/V02_PIVOT.md](docs/V02_PIVOT.md), with a
+> gap analysis in [V02_GAP_ANALYSIS.md](V02_GAP_ANALYSIS.md).
+
 ## Subsystems
 
 ```mermaid
