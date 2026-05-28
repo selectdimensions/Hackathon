@@ -6,8 +6,10 @@ import win32com.client
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SSFM_CREATE_FOR_WRITE = 3
+NARR = os.environ.get("NARR", "narration.json")     # input timeline
+PREFIX = os.environ.get("PREFIX", "line_")          # output wav prefix
 
-nav = json.load(open(os.path.join(HERE, "narration.json"), encoding="utf-8"))
+nav = json.load(open(os.path.join(HERE, NARR), encoding="utf-8"))
 voice = win32com.client.Dispatch("SAPI.SpVoice")
 
 # Prefer an English voice if one is installed.
@@ -17,7 +19,7 @@ for tok in voice.GetVoices():
         break
 
 for i, e in enumerate(nav["events"]):
-    fn = os.path.join(HERE, "line_%02d.wav" % i)
+    fn = os.path.join(HERE, "%s%02d.wav" % (PREFIX, i))
     stream = win32com.client.Dispatch("SAPI.SpFileStream")
     stream.Open(fn, SSFM_CREATE_FOR_WRITE)
     voice.AudioOutputStream = stream
