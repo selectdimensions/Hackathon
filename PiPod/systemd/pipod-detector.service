@@ -1,0 +1,21 @@
+# /etc/systemd/system/pipod-detector.service
+# Always-on Stage-1 energy detector (gap E1). Install on a DragonOS Pi64 pod.
+# Enable: sudo systemctl enable --now pipod-detector
+
+[Unit]
+Description=PiPod Stage-1 SDR energy detector
+After=network.target chrony.service
+Wants=chrony.service
+
+[Service]
+Type=simple
+# TODO: pass pod/band config (center_hz, sample_rate, threshold, dwell) via args/env.
+ExecStart=/usr/local/bin/pipod-detector
+Restart=on-failure
+RestartSec=2
+Nice=-5
+# SDR USB access; tighten before deployment.
+# SupplementaryGroups=plugdev
+
+[Install]
+WantedBy=multi-user.target
