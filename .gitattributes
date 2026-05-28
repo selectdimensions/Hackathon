@@ -8,7 +8,6 @@
 *.json      text eol=lf
 *.yml       text eol=lf
 *.yaml      text eol=lf
-
 # CRLF on PowerShell — Windows-native tooling prefers it.
 *.ps1       text eol=crlf
 # Binary — never normalize, never diff as text.
@@ -23,3 +22,4 @@
 *.f3d       binary
 *.kicad_pcb binary
 *.3mf filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
