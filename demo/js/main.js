@@ -145,7 +145,11 @@
     for (const em of scenario.emitters) {
       const state = window.Sim.emitterStateAt(em, tElapsedMs, baseUnixUs);
       if (!state) continue;
-      const hot = (tElapsedMs >= (em.path[em.path.length - 1].t_ms - 5000));
+      // Flare the emitter red once it closes inside 2 km of the protected soldier
+      // — the "danger close" cue for the early-warning screen.
+      const rangeToSoldierM = window.Geo.haversineM(
+        scenario.soldier.lat, scenario.soldier.lon, state.lat, state.lon);
+      const hot = rangeToSoldierM < 2000;
       mapUI.updateEmitter(em.id, state.lat, state.lon, 0, em.label, hot);
       // each pod polls — throttled with per-pod stagger
       for (let i = 0; i < pods.length; ++i) {

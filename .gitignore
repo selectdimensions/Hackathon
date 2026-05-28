@@ -59,4 +59,12 @@ Desktop.ini
 # --- Claude Code local overrides (per-machine, not committed) ---
 .claude/settings.local.json
 .cc-history/
+# --- Reference template (too large to track) ---
 AllHandsUKR.odp
+
+# --- Demo video capture artifacts (scripts are tracked; outputs are not) ---
+capture/node_modules/
+capture/video/
+capture/*.wav
+capture/preroll.json
+capture/narration.json
