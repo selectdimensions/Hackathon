@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TENEBRIS — test harness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="../branding/tenebris_favicon_sheet.png">
+  <link rel="stylesheet" href="../branding/web/fonts.css">
+  <link rel="stylesheet" href="../branding/web/tokens.css">
+  <link rel="stylesheet" href="css/demo.css">
+  <style>
+    /* test-harness-only layout; colors/typography come from brand tokens */
+    body { padding: var(--sp-5); }
+    .test-h {
+      display: flex; align-items: center; gap: var(--sp-3);
+      margin-bottom: var(--sp-2);
+    }
+    .test-h .brand-mark { width: 26px; height: 26px; color: var(--tb-accent); }
+    .test-h .brand-mark svg { width: 100%; height: 100%; }
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--fs-xl);
+      letter-spacing: var(--letter-display);
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .sub {
+      color: var(--text-secondary);
+      margin-bottom: var(--sp-5);
+      font-size: var(--fs-md);
+      max-width: 720px;
+    }
+    .controls-row { margin-bottom: var(--sp-4); display: flex; gap: var(--sp-2); align-items: center; }
+    table { border-collapse: collapse; width: 100%; font: var(--fs-sm)/1.5 var(--font-mono); }
+    th, td { padding: var(--sp-2) var(--sp-3); text-align: left; border-bottom: 1px solid var(--border-muted); }
+    th {
+      color: var(--text-dim); font-weight: 500;
+      font-family: var(--font-display);
+      font-size: var(--fs-xs);
+      letter-spacing: var(--letter-display);
+      text-transform: uppercase;
+    }
+    tr.PASS td.result { color: var(--tb-success-bright); font-weight: 600; }
+    tr.FAIL td.result { color: var(--tb-warn); font-weight: 600; }
+    tr.RUN td.result { color: #FCD34D; }
+    td.result { font-family: var(--font-display); font-weight: 700; }
+    .err {
+      color: #FCA5A5;
+      font-size: var(--fs-sm);
+      padding-left: var(--sp-5);
+      font-family: var(--font-mono);
+    }
+    #summary {
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-muted);
+      border-radius: var(--r-md);
+      margin-top: var(--sp-4);
+      font-weight: 600;
+      font-family: var(--font-display);
+      letter-spacing: var(--letter-display);
+      text-transform: uppercase;
+    }
+    #summary.PASS { color: var(--tb-success-bright); border-color: var(--tb-success-bright); }
+    #summary.FAIL { color: var(--tb-warn); border-color: var(--tb-warn); }
+  </style>
+</head>
+<body>
+  <div class="test-h">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 100 100" fill="currentColor">
+        <path d="M 28 8 L 8 48 L 18 68 L 3 88 L 28 100 L 58 100 L 78 88 L 68 68 L 88 48 L 68 8 Z"/>
+        <path d="M 50 18 a 8 8 0 0 1 0 16 a 8 8 0 0 1 0 -16 Z M 50 38 L 40 43 L 40 68 L 50 78 L 60 68 L 60 43 Z"/>
+      </svg>
+    </span>
+    <h1>Tenebris · test harness</h1>
+  </div>
+  <div class="sub">Runs each scenario in-process at 100× sim speed (no map render, no audio), captures every event, asserts per-scenario expectations. Same checks as <code>scripts/demo_audit.py</code> — but in-browser so the actual JS code path is exercised.</div>
+  <div class="controls-row">
+    <button id="run" class="btn primary">▶ Run all 4 scenarios</button>
+    <button id="download" class="btn" disabled>⬇ Download report JSON</button>
+    <span id="status"></span>
+  </div>
+
+  <table id="results">
+    <thead>
+      <tr><th>scenario</th><th>alerts</th><th>km buckets</th><th>cues</th><th>max err (m)</th><th>first alert (s)</th><th class="result">result</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div id="summary">awaiting run…</div>
+
+  <script src="js/protocol.js"></script>
+  <script src="js/sim/geo.js"></script>
+  <script src="js/sim/scenario.js"></script>
+  <script src="js/sim/sensorPod.js"></script>
+  <script src="js/sim/masterNode.js"></script>
+  <script>
+  const SCENARIOS = [
+    'data/scenarios/early_warning.json',
+    'data/scenarios/fpv_incursion.json',
+    'data/scenarios/gnss_jammer.json',
+    'data/scenarios/multi_threat.json',
+  ];
+  const EXPECTED = {
+    'early_warning': { min_alerts: 8, km: [3,4,5,6,7,8,9,10], cues: 3, max_err: 400 },
+    'fpv_incursion': { min_alerts: 8, km: [3,4,5,6,7,8,9,10], cues: 3, max_err: 400 },
+    'gnss_jammer':   { min_alerts: 2, km: [6,8],              cues: 2, max_err: 600 },
+    'multi_threat':  { min_alerts: 8, km: [2,3,4,5,6,7,8,9],  cues: 3, max_err: 500 },
+  };
+
+  const tbody = document.querySelector('#results tbody');
+  const summary = document.getElementById('summary');
+  const status = document.getElementById('status');
+  const downloadBtn = document.getElementById('download');
+  let lastReport = null;
+
+  function runScenario(scenario) {
+    const { Sim, Proto, Geo } = window;
+    const SIM_TICK_MS = 100;     // sim-time advance per tick
+    const POLL_MS = 200;
+    const alerts = [];
+    let detectCount = 0;
+    let firstAlertMs = null;
+
+    const pods = scenario.pods.map(p => Sim.makeSensorPod({
+      nodeId: p.node_id, label: p.label, lat: p.lat, lon: p.lon,
+      bands: p.bands, band: p.band, isLive: p.is_live,
+      hasGpsPps: p.has_gps_pps !== false,
+      detectThresholdDbm: p.detect_threshold_dbm,
+    }));
+
+    function emitterTruthAt(em, tMs) {
+      const s = Sim.emitterStateAt(em, tMs, 0);
+      return s ? { lat: s.lat, lon: s.lon, band: em.band } : null;
+    }
+
+    const master = Sim.makeMasterNode({
+      soldierLatLon: { lat: scenario.soldier.lat, lon: scenario.soldier.lon },
+      onEvent: (ev) => {
+        if (ev.event === 'detect') detectCount++;
+        if (ev.event === 'alert') {
+          // Match alert -> emitter by threat_class -> first emitter with that threat_class.
+          const em = scenario.emitters.find(e => e.threat_class === ev.threat_class) || scenario.emitters[0];
+          const truth = emitterTruthAt(em, ev.ts_unix_ms);
+          alerts.push({
+            t_ms: ev.ts_unix_ms,
+            km: Math.max(1, Math.min(10, Math.round((ev._range_m || 0)/1000))),
+            cue: ev.cue_id,
+            range_m: ev._range_m,
+            bearing: ev._bearing_deg_real,
+            err_m: truth ? Geo.haversineM(ev._emitter_lat, ev._emitter_lon, truth.lat, truth.lon) : null,
+          });
+          if (firstAlertMs === null) firstAlertMs = ev.ts_unix_ms;
+        }
+      },
+    });
+
+    // synthetic clock — sim-time only, no Date.now() so we can run faster than realtime
+    let lastPolled = new Map();
+    let t = 0;
+    while (t <= scenario.duration_ms) {
+      for (const em of scenario.emitters) {
+        const state = Sim.emitterStateAt(em, t, 0);
+        if (!state) continue;
+        for (const pod of pods) {
+          if (!pod.state.bands.includes(state.bandId)) continue;
+          const last = lastPolled.get(pod.state.nodeId) || -1e9;
+          if (t - last < POLL_MS) continue;
+          lastPolled.set(pod.state.nodeId, t);
+          const ev = pod.poll(t, state);
+          if (ev) master.ingestDetect(ev);
+        }
+      }
+      // Drive master tick with sim time t — master.tick uses nowMs internally,
+      // and emit_alert sets alert.ts_unix_ms = nowMs, so the alert timestamps
+      // become sim-time. That's exactly what we want for the test report.
+      master.tick(t);
+      t += SIM_TICK_MS;
+    }
+    return { alerts, detectCount, firstAlertMs };
+  }
+
+  function check(id, result) {
+    const exp = EXPECTED[id];
+    if (!exp) return { ok: true, errs: [] };
+    const errs = [];
+    if (result.alerts.length < exp.min_alerts) errs.push(`only ${result.alerts.length} alerts (expected >=${exp.min_alerts})`);
+    const kmSeen = new Set(result.alerts.map(a => a.km));
+    const missing = exp.km.filter(k => !kmSeen.has(k));
+    if (missing.length) errs.push(`missing km buckets ${JSON.stringify(missing)}`);
+    const cues = new Set(result.alerts.map(a => a.cue)).size;
+    if (cues < exp.cues) errs.push(`only ${cues} distinct cues (expected >=${exp.cues})`);
+    const maxErr = result.alerts.reduce((m, a) => Math.max(m, a.err_m || 0), 0);
+    if (maxErr > exp.max_err) errs.push(`max err ${maxErr.toFixed(0)}m (threshold ${exp.max_err})`);
+    return { ok: errs.length === 0, errs, maxErr };
+  }
+
+  async function runAll() {
+    tbody.innerHTML = '';
+    summary.textContent = 'running…';
+    summary.className = '';
+    status.textContent = '';
+    let allOk = true;
+    const report = { ran_at: new Date().toISOString(), scenarios: [] };
+
+    for (const url of SCENARIOS) {
+      const sc = await window.Sim.loadScenario(url);
+      const row = document.createElement('tr');
+      row.className = 'RUN';
+      row.innerHTML = `<td>${sc.id}</td><td colspan="5">running…</td><td class="result">RUN</td>`;
+      tbody.appendChild(row);
+      await new Promise(r => setTimeout(r, 0));   // yield so the "RUN" row paints
+
+      const t0 = performance.now();
+      const result = runScenario(sc);
+      const dt = performance.now() - t0;
+      const judge = check(sc.id, result);
+      allOk = allOk && judge.ok;
+
+      const kmSeen = [...new Set(result.alerts.map(a => a.km))].sort((a,b) => a-b);
+      const cues = new Set(result.alerts.map(a => a.cue)).size;
+      row.className = judge.ok ? 'PASS' : 'FAIL';
+      row.innerHTML = `
+        <td>${sc.id}</td>
+        <td>${result.alerts.length}</td>
+        <td>${JSON.stringify(kmSeen)}</td>
+        <td>${cues}</td>
+        <td>${judge.maxErr ? judge.maxErr.toFixed(0) : '-'}</td>
+        <td>${result.firstAlertMs !== null ? (result.firstAlertMs/1000).toFixed(1) : '-'}</td>
+        <td class="result">${judge.ok ? 'PASS' : 'FAIL'}</td>
+      `;
+      for (const e of judge.errs) {
+        const er = document.createElement('tr');
+        er.innerHTML = `<td colspan="7" class="err">- ${e}</td>`;
+        tbody.appendChild(er);
+      }
+      report.scenarios.push({
+        id: sc.id, result: judge.ok ? 'PASS' : 'FAIL',
+        alerts: result.alerts.length, km_seen: kmSeen, cues, max_err_m: judge.maxErr,
+        first_alert_ms: result.firstAlertMs, errors: judge.errs,
+        elapsed_ms: dt,
+      });
+    }
+    summary.textContent = 'OVERALL: ' + (allOk ? 'PASS' : 'FAIL');
+    summary.className = allOk ? 'PASS' : 'FAIL';
+    lastReport = report;
+    downloadBtn.disabled = false;
+  }
+
+  document.getElementById('run').onclick = runAll;
+  downloadBtn.onclick = () => {
+    if (!lastReport) return;
+    const blob = new Blob([JSON.stringify(lastReport, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `demo_test_report_${Date.now()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  </script>
+</body>
+</html>

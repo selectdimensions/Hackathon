@@ -43,13 +43,17 @@ def report_duty_cycle(events: list[dict]) -> int:
         if freq_hz is None:
             continue
         ts_ms = ev["ts_unix_ms"]
-        hour_bucket = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc).strftime("%Y-%m-%dT%H:00Z")
+        hour_bucket = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:00Z"
+        )
         node_id = ev.get("node_id") or ev.get("target_node_id") or 0xFF
         sub_band = sub_band_for_freq(freq_hz)
         buckets[(node_id, sub_band, hour_bucket)] += int(on_air)
 
     fail = 0
-    print(f"{'node':>6}  {'band':>4}  {'hour':<22}  {'tx_ms':>8}  {'budget':>8}  {'pct':>6}  status")
+    print(
+        f"{'node':>6}  {'band':>4}  {'hour':<22}  {'tx_ms':>8}  {'budget':>8}  {'pct':>6}  status"
+    )
     for (node_id, sub_band, hour), tx_ms in sorted(buckets.items()):
         budget = EU_SUB_BAND_G_BUDGET_MS_PER_HOUR if sub_band == "g" else None
         if budget is None:
@@ -65,13 +69,20 @@ def report_duty_cycle(events: list[dict]) -> int:
                 status = "WARN"
             else:
                 status = "OK"
-        print(f"{node_id:>6}  {sub_band:>4}  {hour:<22}  {tx_ms:>8}  {str(budget):>8}  {pct:>6}  {status}")
+        print(
+            f"{node_id:>6}  {sub_band:>4}  {hour:<22}  {tx_ms:>8}  {str(budget):>8}  {pct:>6}  {status}"
+        )
     return fail
 
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--logs", required=True, type=Path, help="Path to .jsonl file or directory of .jsonl files")
+    p.add_argument(
+        "--logs",
+        required=True,
+        type=Path,
+        help="Path to .jsonl file or directory of .jsonl files",
+    )
     p.add_argument("--report-duty-cycle", action="store_true")
     args = p.parse_args()
 

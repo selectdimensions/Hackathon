@@ -1,0 +1,25 @@
+{
+  "id": "gnss_jammer",
+  "label": "GNSS L1 jammer — relocating static threat (6 km E → 8 km NW)",
+  "description": "Same 25-pod mesh + C&C. Stationary GNSS L1 jammer at 6 km due east for the first 60 s sim, then relocates instantly to 8 km NW and stays there. Tests: (a) accurate localisation of a static emitter, (b) re-triangulation on relocation — bearing jumps from ~090° to ~315°, range jumps from 6 km to 8 km. Two distinct km buckets, two distinct bearing buckets, no smooth interpolation in between.",
+  "layout_ref": "_layout.json",
+  "time_scale": 10,
+  "emitters": [
+    {
+      "id": "gnss_jammer",
+      "label": "GNSS L1 jammer (static, relocates)",
+      "band": 3,
+      "threat_class": 3,
+      "tx_power_dbm": 30,
+      "path_loss_n": 2.5,
+      "freq_hopper": false,
+      "path": [
+        { "t_ms":      0, "eastM": 6000, "northM":    0 },
+        { "t_ms":  60000, "eastM": 6000, "northM":    0 },
+        { "t_ms":  60001, "eastM": -5657, "northM": 5657 },
+        { "t_ms": 240000, "eastM": -5657, "northM": 5657 }
+      ]
+    }
+  ],
+  "duration_ms": 260000
+}

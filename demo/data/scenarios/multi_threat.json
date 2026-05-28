@@ -1,0 +1,37 @@
+{
+  "id": "multi_threat",
+  "label": "Multi-threat — V-shape FPV (5.8 GHz) + static 2.4 GHz jammer",
+  "description": "Same 25-pod mesh + C&C, but with two concurrent emitters on different bands. Each pod listens on all three bands (3/4/5) via the multi-band sensor refactor — same hardware, separate solve windows per band. FPV drone flies a V-shape (NE down to soldier, then back up to NW) while a 2.4 GHz control jammer sits static at 6 km N. Tests interleaved-band alerts and the master's per-band lastAlertedByBand bookkeeping.",
+  "layout_ref": "_layout.json",
+  "time_scale": 10,
+  "emitters": [
+    {
+      "id": "fpv_drone",
+      "label": "5.8 GHz FPV drone (V-shape)",
+      "band": 5,
+      "threat_class": 1,
+      "tx_power_dbm": 27,
+      "path_loss_n": 2.2,
+      "freq_hopper": false,
+      "path": [
+        { "t_ms":      0, "eastM":  4500, "northM":  9000 },
+        { "t_ms": 240000, "eastM":   500, "northM":  2000 },
+        { "t_ms": 480000, "eastM": -4500, "northM":  9000 }
+      ]
+    },
+    {
+      "id": "control_jammer",
+      "label": "2.4 GHz control jammer (static, 6 km N)",
+      "band": 4,
+      "threat_class": 4,
+      "tx_power_dbm": 27,
+      "path_loss_n": 2.3,
+      "freq_hopper": true,
+      "path": [
+        { "t_ms":      0, "eastM": 0, "northM": 6000 },
+        { "t_ms": 540000, "eastM": 0, "northM": 6000 }
+      ]
+    }
+  ],
+  "duration_ms": 540000
+}

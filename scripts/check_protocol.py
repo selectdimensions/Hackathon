@@ -44,7 +44,7 @@ def check_protocol_h(path: Path) -> list[str]:
         name = m.group(1)
         # Check if the matched text is preceded by __attribute__((packed))
         start = m.start()
-        head = src[max(0, start - 60):start]
+        head = src[max(0, start - 60) : start]
         if "__attribute__((packed))" not in head:
             errs.append(f"{path}: struct {name} is not __attribute__((packed))")
 
@@ -53,7 +53,9 @@ def check_protocol_h(path: Path) -> list[str]:
     for m in STRUCT_RE.finditer(src):
         name = m.group(1)
         if name not in asserted:
-            errs.append(f"{path}: struct {name} missing static_assert(sizeof(...) == N)")
+            errs.append(
+                f"{path}: struct {name} missing static_assert(sizeof(...) == N)"
+            )
 
     # 3. Every *Packet must have version + crc16 (RekeyPacket excepted from crc16
     #    because it's signed instead, but RekeyPacket still has the Ed25519 sig).
@@ -77,17 +79,21 @@ def check_protocol_h(path: Path) -> list[str]:
         candidate = enum_name.lower().replace("_", "")
         # Crude: check for a struct name containing the enum's base word.
         # e.g. MSG_DETECT -> DetectPacket
-        found = any(candidate.startswith(s.removesuffix("packet")) or
-                    s.removesuffix("packet").startswith(candidate)
-                    for s in struct_names_lower)
+        found = any(
+            candidate.startswith(s.removesuffix("packet"))
+            or s.removesuffix("packet").startswith(candidate)
+            for s in struct_names_lower
+        )
         if not found:
             # Check for a comment within ~80 chars mentioning the enum
             idx = src.find(f"MSG_{enum_name}")
             if idx >= 0:
-                surrounding = src[idx:idx + 200]
+                surrounding = src[idx : idx + 200]
                 if "piggyback" in surrounding or "future" in surrounding:
                     continue  # documented exception
-            errs.append(f"{path}: MSG_{enum_name} has no matching *Packet struct (or doc'd exception)")
+            errs.append(
+                f"{path}: MSG_{enum_name} has no matching *Packet struct (or doc'd exception)"
+            )
 
     # 5. Total inner size warning.
     for name, n in asserted.items():
@@ -95,15 +101,21 @@ def check_protocol_h(path: Path) -> list[str]:
             continue
         on_air = 3 + n + 8  # envelope + payload + tag
         if on_air > 64:
-            errs.append(f"{path}: {name} on-air size {on_air}B exceeds LoRa SF9 MTU 64B")
+            errs.append(
+                f"{path}: {name} on-air size {on_air}B exceeds LoRa SF9 MTU 64B"
+            )
 
     return errs
 
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("files", nargs="*", type=Path,
-                   help="Paths to Protocol.h files (defaults to shared/Protocol.h)")
+    p.add_argument(
+        "files",
+        nargs="*",
+        type=Path,
+        help="Paths to Protocol.h files (defaults to shared/Protocol.h)",
+    )
     args = p.parse_args()
 
     targets = args.files or [Path("shared/Protocol.h")]

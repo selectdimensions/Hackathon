@@ -111,6 +111,21 @@ struct __attribute__((packed)) DetectPacket {
 static_assert(sizeof(DetectPacket) == 28, "DetectPacket layout drift — update ARCHITECTURE.md airtime table");
 
 // =====================================================================
+// Sensor -> Master heartbeat (encrypted body). Sent every 30 s if no
+// detections have triggered. Lets master tell live pods from dead ones.
+// =====================================================================
+struct __attribute__((packed)) HeartbeatPacket {
+  uint8_t  version;          // PROTOCOL_VERSION
+  uint8_t  msg_type;         // MSG_HEARTBEAT
+  uint8_t  node_id;
+  uint8_t  battery_pct;
+  uint8_t  noise_floor_dbm;
+  uint16_t uptime_min;
+  uint16_t crc16;
+};
+static_assert(sizeof(HeartbeatPacket) == 9, "HeartbeatPacket layout drift");
+
+// =====================================================================
 // Master -> Soldier alert packet (encrypted body)
 // Target on-air: 10 plaintext + 3 envelope + 8 tag = 21 bytes
 // =====================================================================
