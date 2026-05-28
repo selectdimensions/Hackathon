@@ -2,7 +2,7 @@
 
 ## Context
 
-This document gaps the current repository against the **"RF-Threat Detection Mesh v0.2 — Raspberry Pi 5 + SDR Pivot"** architecture/procurement report (committed as [`docs/V02_PIVOT.md`](docs/V02_PIVOT.md) once gap G3 is closed).
+This document gaps the current repository against the **"RF-Threat Detection Mesh v0.2 — Raspberry Pi 5 + SDR Pivot"** architecture/procurement report ([`docs/V02_PIVOT.md`](docs/V02_PIVOT.md)). The source report is titled "v0.2" by its author; in this repo v0.2 is already the demo/protocol milestone, so this hardware track is tracked as the **`v0.3-hardware`** milestone.
 
 The repo today is a **v0.1 ESP32-C6 + SX1262 + AD8318 log-detector scaffold**, well documented and CI-gated, but with placeholder firmware bodies. The v0.2 doc is a **procurement/architecture pivot** to Pi 5 + SDR pods with the **ESP32-C6 retained as a per-pod LoRa/crypto companion** (Option B in doc §6), plus a single **KrakenSDR at the master site** for direction-finding (not TDOA). Wire format and crypto stay bit-identical.
 
