@@ -13,7 +13,7 @@ flowchart TB
     PodA["Pod A<br/>5.8 GHz FPV video"]
     PodB["Pod B<br/>2.4 GHz FPV control"]
     PodC["Pod C<br/>GNSS L1 jam"]
-    PodD["Pod D<br/>900 MHz / ELRS"]
+    PodD["Pod D<br/>868 MHz EU / ELRS-EU"]
 
     Master["Master Node<br/>TDOA + RSSI solve<br/>Rekey broadcaster"]
     Soldier1["Soldier Node 1<br/>I2S DAC -> audio"]

@@ -19,7 +19,7 @@ flowchart TB
 | `Body/master/` | | Static box for master node — IP54, antenna gland |
 | `Body/soldier/` | | Belt-mount pouch with cable strain relief for speaker |
 | `Elect/carrier/` | KiCad | Shared carrier board: ESP32-C6 + SX1262 + power tree |
-| `Elect/frontends/` | KiCad | Per-band RF frontend daughterboards (5.8 GHz, 2.4 GHz, GNSS L1, 900 MHz) |
+| `Elect/frontends/` | KiCad | Per-band RF frontend daughterboards (5.8 GHz, 2.4 GHz, GNSS L1, 868 MHz EU) |
 | `Elect/audio/` | KiCad | MAX98357A breakout for soldier node |
 
 ## TODOs (out of scope for v0.1)
