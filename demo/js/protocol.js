@@ -19,7 +19,7 @@
   const BandId = {
     BAND_UNKNOWN:     0x00,
     BAND_30_88_MHZ:   0x01,
-    BAND_433_915_MHZ: 0x02,
+    BAND_433_868_MHZ: 0x02,
     BAND_GNSS_L1:     0x03,
     BAND_2400_MHZ:    0x04,
     BAND_5800_MHZ:    0x05,
@@ -27,7 +27,7 @@
   const BandLabel = {
     0x00: 'UNKNOWN',
     0x01: '30_88_MHZ',
-    0x02: '433_915_MHZ',
+    0x02: '433_868_MHZ',
     0x03: 'GNSS_L1',
     0x04: '2400_MHZ',
     0x05: '5800_MHZ',

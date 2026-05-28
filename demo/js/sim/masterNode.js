@@ -18,7 +18,7 @@
     [P.BandId.BAND_5800_MHZ]:    { txPower: 27, n: 2.2 },
     [P.BandId.BAND_2400_MHZ]:    { txPower: 27, n: 2.3 },
     [P.BandId.BAND_GNSS_L1]:     { txPower: 30, n: 2.5 },
-    [P.BandId.BAND_433_915_MHZ]: { txPower: 23, n: 2.6 },
+    [P.BandId.BAND_433_868_MHZ]: { txPower: 23, n: 2.6 },
     [P.BandId.BAND_30_88_MHZ]:   { txPower: 25, n: 2.5 },
   };
 
@@ -117,7 +117,7 @@
     if (bandId === P.BandId.BAND_2400_MHZ)    return P.ThreatClass.THREAT_FPV_CONTROL;
     if (bandId === P.BandId.BAND_GNSS_L1)     return P.ThreatClass.THREAT_GNSS_JAM;
     if (bandId === P.BandId.BAND_30_88_MHZ)   return P.ThreatClass.THREAT_TACTICAL_JAM;
-    if (bandId === P.BandId.BAND_433_915_MHZ) return P.ThreatClass.THREAT_FPV_CONTROL;
+    if (bandId === P.BandId.BAND_433_868_MHZ) return P.ThreatClass.THREAT_FPV_CONTROL;
     return P.ThreatClass.THREAT_UNKNOWN;
   }
 
