@@ -111,14 +111,14 @@ python -m http.server 8000
 # open http://localhost:8000/demo/
 ```
 
-## Beat 1 — FPV drone at the airport *(5:00 → 6:00)*
+## Beat 1 — Early warning: a drone closes on the line *(5:00 → 6:00)*
 
-- **Open** the `fpv_incursion` scenario.
-- **Point** at the four blue dots — "four sensor pods. One slot is wired to take a real BladeRF receiver on a Raspberry Pi the day we have one."
-- **Press Play.** Drone enters from the west.
-- **Watch** the pipeline strip flash blue → red as the packet travels.
-- **Listen** to the soldier earpiece — *"two hundred seventy degrees, five kilometres."*
-- **Click ⬇ ndjson** — "every event is signed JSON. Ready for the national log on day one."
+- **Open** the `early_warning` scenario — it's already selected by default.
+- **Point** at the forward screen — "fifteen pods in three rows; one slot takes a real BladeRF/Pi the day we have one."
+- **Press Play.** A drone enters 10 km out and closes at 60 km/h.
+- **Listen** as the earpiece counts the range down — *"…ten kilometres → nine kilometres → eight…"* — bearing and distance updating the whole way in.
+- **Watch** the drone marker flare red the instant it crosses inside the 2 km ring.
+- **Click ⬇ ndjson** — "every alert is signed JSON. Ready for the national log on day one."
 
 ## Beat 2 — GPS jammer at the embassy *(6:00 → 7:00)*
 
@@ -154,7 +154,7 @@ python -m http.server 8000
 | 3:40 | Slide 6 | "Same mesh. New senses." |
 | 4:10 | Slide 7 | "A national grid, not a national bill." |
 | 4:40 | Slide 8 | "Partner with us before someone else sells the country a worse answer." |
-| 5:00 | demo / fpv_incursion | "Every event is signed JSON." |
+| 5:00 | demo / early_warning | "Ten kilometres… nine… eight — nine minutes of warning." |
 | 6:00 | demo / gnss_jammer | "Surgical, not blanket." |
 | 7:00 | demo / multi_threat | "Same encryption, same audio cue, no firmware rewrite." |
 | 7:45 | close | "Belgium can have this by Christmas." |
