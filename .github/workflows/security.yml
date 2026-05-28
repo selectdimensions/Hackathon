@@ -15,10 +15,40 @@ jobs:
   gitleaks:
     name: gitleaks (secret scan)
     runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: "8.24.3"
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      # Full-history scan (no incremental `<base>^..<head>` range).
+      # The repo has two disjoint root commits (the scaffold was committed
+      # twice and later joined with --allow-unrelated-histories); the
+      # gitleaks-action's auto-range walked back to a root and tried to
+      # reference root^, which does not exist. Plain `gitleaks detect` scans
+      # every reachable commit from the roots forward, so it never
+      # dereferences a nonexistent parent. Exit 1 on a real finding, 0 clean.
+      - name: Scan full git history
+        run: |
+          gitleaks detect \
+            --source . \
+            --redact -v \
+            --exit-code 1 \
+            --report-format sarif \
+            --report-path results.sarif \
+            --log-level info
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+        continue-on-error: true
