@@ -1,0 +1,12 @@
+{
+  "total": 30,
+  "note": "Times are wall-clock seconds in the 30s (sped) cut, aligned to phase boundaries: setup~0.7, launch~3.8, track~7.7, jam~22.4, recovery~26.3.",
+  "events": [
+    { "t": 0.8,  "kind": "status", "text": "Forty-six silent pods watch a ten-kilometre zone." },
+    { "t": 4.0,  "kind": "alert",  "text": "Drone airborne. Contact." },
+    { "t": 8.0,  "kind": "status", "text": "Tracking. The fix locks to one metre as it weaves." },
+    { "t": 15.0, "kind": "status", "text": "Bearing and range update live." },
+    { "t": 22.6, "kind": "warn",   "text": "Jammed. We degrade to a bearing, never blind." },
+    { "t": 26.5, "kind": "status", "text": "Re-synced. Lock restored." }
+  ]
+}
