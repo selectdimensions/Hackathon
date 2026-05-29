@@ -35,10 +35,10 @@ Position error = c × Δt_error
 Example:
   Δt = 1 microsecond (1µs)
   Error = 3×10^8 m/s × 1×10^-6 s = 300 meters error
-  
+
   Δt = 100 nanoseconds (100ns)
   Error = 3×10^8 m/s × 100×10^-9 s = 30 meters error
-  
+
   Δt = 1.67 nanoseconds (1.67ns)
   Error = 3×10^8 m/s × 1.67×10^-9 s = 0.5 meters error ✓
 ```
@@ -93,17 +93,17 @@ If we place 4 pods at corners:
   Baseline = 10 km
   Target at center = 5√2 km from corners
   Ratio = 10 / (5√2) = 1.4 (POOR—target too close to pods)
-  
+
 If we place pods at 2 km spacing:
   Baseline = 2 km
   Target anywhere = max 1.5 km from nearest pod
   Ratio = 2 / 1.5 = 1.33 (still poor)
-  
+
 If we place pods at 1 km spacing (50 pod grid):
   Baseline = 1 km
   Target anywhere = max 0.7 km from nearest pod
   Ratio = 1 / 0.7 = 1.43 (acceptable, starts working)
-  
+
 If we place pods at 0.5 km spacing (400 pod grid):
   Baseline = 0.5 km
   Target anywhere = max 0.35 km from nearest pod
@@ -229,12 +229,12 @@ Master 1 (Primary)          Master 2 (Standby)
     ↑                           ↑
     └──────────────────────────┘
            Heartbeat every 1 sec
-           
+
 If Master 1 dies:
   - Master 2 detects missing heartbeat (3 sec timeout)
   - Master 2 takes over calculation
   - Fiber backbone auto-routes to Master 2
-  
+
 If BOTH masters + fiber jammed:
   - Pod local oscillators unsync (drift ~100-500 ns/sec)
   - Pods fall back to local trigger detection
@@ -298,7 +298,7 @@ SPHERICAL POD ("Tennis Ball"):
   Volume: ~400-500 cm³
   Weight: 400-600 g
   Survivable drop: 50-100 m
-  
+
 CUBE POD ("Rubik's Cube"):
   Sides: 8 cm
   Volume: ~500 cm³
@@ -326,7 +326,7 @@ Decoy contents:
   - 47Ω + 100Ω + 220Ω resistors (RF impedance matching)
   - PCB with resistor network (mimics LoRa antenna impedance)
   - Plastic enclosure (identical to real pod)
-  
+
 Effect:
   Enemy RWR (Radar Warning Receiver) sees RF impedance match
   │ Cannot easily distinguish decoy from real pod
@@ -373,31 +373,31 @@ Adversary calculates:
 1. Setup (30 sec):
    - 4 pods visible, connected to Master Node (laptop running calc)
    - Operator stands with drone ready
-   
+
 2. Launch (10 sec):
    - Operator throws drone, it takes flight at 10-20 m altitude
-   
+
 3. Detection (15 sec):
    - Within 0.5 sec: Master detects RF pulse from drone TX
    - Within 2 sec: Master calculates position from 4 pods
    - Display on laptop: [X: 234.5m, Y: 156.2m, Z: 18.3m, Confidence: 98%]
-   
+
 4. Track (60 sec):
    - Drone circles the area (3-4 loops)
    - Master updates position every 100 ms
    - Plot trajectory on map: "Drone hovering ~200m NE of position"
-   
+
 5. Jam (30 sec):
    - Operator activates RF jammer (blocks mesh)
    - Master loses LoRa link to pods
    - Master shows degraded estimate: "Possible threat bearing 045°, range 500-800m"
      (Offline calculation with ±100-200m error)
-   
+
 6. Mesh Recovers (10 sec):
    - Operator disables jammer
    - Mesh re-syncs
    - Master shows precise position again: [X: 245.2m, Y: 160.1m] ±50cm
-   
+
 SUMMARY SHOWN ON SCREEN:
   ✓ Detection: <0.5 sec
   ✓ Accuracy: ±50 cm (live), ±200 m (offline)
@@ -460,4 +460,3 @@ SUMMARY SHOWN ON SCREEN:
 2. Build 5-slide deck with diagrams
 3. Script the 3-minute live demo
 4. Prep technical deep-dives for industry partners
-

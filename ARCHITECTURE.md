@@ -44,16 +44,16 @@ sequenceDiagram
 
     RF->>Pod: Analog detector trips threshold
     Pod->>Pod: Build DetectPacket {ts_pps, rssi, snr, lat/lon, ...}
-    Pod->>Pod: AES-128-CCM encrypt under K_session[epoch]
-    Pod->>LoRaA: TX (CAD-gated, 41 B on-air, ~288 ms)
+    Pod->>Pod: AES-128-EAX encrypt under K_session[epoch]
+    Pod->>LoRaA: TX (CAD-gated, 44 B on-air, ~288 ms)
     LoRaA->>Master: RX on Freq A
-    Master->>Master: Verify CCM tag, decrypt, CRC check
+    Master->>Master: Verify EAX tag, decrypt, CRC check
     Master->>Master: Insert into node registry, run TDOA solve
     Master->>Master: Compute bearing, distance, threat_class, cue_id
-    Master->>Master: Build AlertPacket, AES-128-CCM encrypt
+    Master->>Master: Build AlertPacket, AES-128-EAX encrypt
     Master->>LoRaB: TX (21 B on-air, ~41 ms)
     LoRaB->>Soldier: RX on Freq B
-    Soldier->>Soldier: Verify CCM tag, decrypt, CRC check
+    Soldier->>Soldier: Verify EAX tag, decrypt, CRC check
     Soldier->>Soldier: Lookup cue_id → filename in AudioCues.h
     Soldier->>I2S: Stream WAV from LittleFS to I2S DAC
     I2S->>I2S: "threat bearing two-seven-zero, FPV"

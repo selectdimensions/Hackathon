@@ -168,7 +168,7 @@ void handleRx() {
 void setup() {
   Serial.begin(115200);
   delay(1500);
-  Serial.print("\nLLCC68 Mesh Node "); 
+  Serial.print("\nLLCC68 Mesh Node ");
   Serial.println(NODE_ID);
 
   spi.begin(6, 2, 7, 10);

@@ -23,17 +23,17 @@ import json
 import math
 import sys
 from pathlib import Path
-from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCENARIO_DIR = REPO_ROOT / "demo" / "data" / "scenarios"
 
 # Per-band path-loss constants — must match BAND_PATHLOSS in masterNode.js.
 BAND_PATHLOSS = {
-    3: {"tx_power": 30, "n": 2.5},   # GNSS L1
-    4: {"tx_power": 27, "n": 2.3},   # 2.4 GHz
-    5: {"tx_power": 27, "n": 2.2},   # 5.8 GHz
+    3: {"tx_power": 30, "n": 2.5},  # GNSS L1
+    4: {"tx_power": 27, "n": 2.3},  # 2.4 GHz
+    5: {"tx_power": 27, "n": 2.2},  # 5.8 GHz
 }
+
 
 # Cue helpers — match demo/js/protocol.js exactly.
 def bearing_to_step30_cue(deg: float) -> int:
@@ -54,7 +54,9 @@ def meters_to_km_cue(meters: float) -> int:
     return 0x60 + (km - 1)
 
 
-def offset_to_lat_lon(anchor: dict, east_m: float, north_m: float) -> tuple[float, float]:
+def offset_to_lat_lon(
+    anchor: dict, east_m: float, north_m: float
+) -> tuple[float, float]:
     lat = anchor["lat"] + north_m / 111132.0
     lon = anchor["lon"] + east_m / (111320.0 * math.cos(math.radians(anchor["lat"])))
     return lat, lon
@@ -89,7 +91,9 @@ def inv_range(rssi: float, tx_power: float, n: float) -> float:
 def load_scenario(path: Path) -> dict:
     raw = json.loads(path.read_text(encoding="utf-8"))
     if "layout_ref" in raw:
-        layout = json.loads((path.parent / raw["layout_ref"]).read_text(encoding="utf-8"))
+        layout = json.loads(
+            (path.parent / raw["layout_ref"]).read_text(encoding="utf-8")
+        )
         for k, v in layout.items():
             if k not in raw:
                 raw[k] = v
@@ -99,22 +103,30 @@ def load_scenario(path: Path) -> dict:
     for em in raw.get("emitters", []):
         ref = BAND_PATHLOSS.get(em["band"])
         if ref is None:
-            raise ValueError(f"{path.name}: emitter {em.get('id')} uses unknown band {em['band']}")
+            raise ValueError(
+                f"{path.name}: emitter {em.get('id')} uses unknown band {em['band']}"
+            )
         if abs(em["tx_power_dbm"] - ref["tx_power"]) > 0.01:
             raise ValueError(
                 f"{path.name}: emitter {em.get('id')} tx_power_dbm={em['tx_power_dbm']} "
-                f"!= BAND_PATHLOSS[band {em['band']}].tx_power={ref['tx_power']}")
+                f"!= BAND_PATHLOSS[band {em['band']}].tx_power={ref['tx_power']}"
+            )
         if abs(em["path_loss_n"] - ref["n"]) > 0.01:
             raise ValueError(
                 f"{path.name}: emitter {em.get('id')} path_loss_n={em['path_loss_n']} "
-                f"!= BAND_PATHLOSS[band {em['band']}].n={ref['n']}")
+                f"!= BAND_PATHLOSS[band {em['band']}].n={ref['n']}"
+            )
     # resolve pod / soldier / c2 / emitter positions
     anchor = raw["anchor"]
     for p in raw["pods"]:
         p["lat"], p["lon"] = offset_to_lat_lon(anchor, p["eastM"], p["northM"])
-    raw["soldier"]["lat"], raw["soldier"]["lon"] = offset_to_lat_lon(anchor, raw["soldier"]["eastM"], raw["soldier"]["northM"])
+    raw["soldier"]["lat"], raw["soldier"]["lon"] = offset_to_lat_lon(
+        anchor, raw["soldier"]["eastM"], raw["soldier"]["northM"]
+    )
     if "c2" in raw:
-        raw["c2"]["lat"], raw["c2"]["lon"] = offset_to_lat_lon(anchor, raw["c2"]["eastM"], raw["c2"]["northM"])
+        raw["c2"]["lat"], raw["c2"]["lon"] = offset_to_lat_lon(
+            anchor, raw["c2"]["eastM"], raw["c2"]["northM"]
+        )
     for em in raw["emitters"]:
         for wp in em["path"]:
             wp["lat"], wp["lon"] = offset_to_lat_lon(anchor, wp["eastM"], wp["northM"])
@@ -133,12 +145,16 @@ def emitter_state_at(em: dict, t_ms: float) -> dict | None:
         if t_ms <= path[i]["t_ms"]:
             a, b = path[i - 1], path[i]
             u = (t_ms - a["t_ms"]) / max(1, b["t_ms"] - a["t_ms"])
-            return {"lat": a["lat"] + (b["lat"] - a["lat"]) * u,
-                    "lon": a["lon"] + (b["lon"] - a["lon"]) * u}
+            return {
+                "lat": a["lat"] + (b["lat"] - a["lat"]) * u,
+                "lon": a["lon"] + (b["lon"] - a["lon"]) * u,
+            }
     return None
 
 
-def solve_rssi_multilat(detects: list[dict], band_id: int) -> tuple[float, float] | None:
+def solve_rssi_multilat(
+    detects: list[dict], band_id: int
+) -> tuple[float, float] | None:
     """Hyperbolic linear LS + Gauss-Newton refinement. Mirrors masterNode.js."""
     if len(detects) < 3:
         return None
@@ -146,11 +162,14 @@ def solve_rssi_multilat(detects: list[dict], band_id: int) -> tuple[float, float
     lat0 = sum(d["lat"] for d in detects) / len(detects)
     lon0 = sum(d["lon"] for d in detects) / len(detects)
     cos_lat = math.cos(math.radians(lat0))
-    pods = [{
-        "e": (d["lon"] - lon0) * 111320 * cos_lat,
-        "n": (d["lat"] - lat0) * 111132,
-        "r": inv_range(d["rssi_dbm"], p["tx_power"], p["n"]),
-    } for d in detects]
+    pods = [
+        {
+            "e": (d["lon"] - lon0) * 111320 * cos_lat,
+            "n": (d["lat"] - lat0) * 111132,
+            "r": inv_range(d["rssi_dbm"], p["tx_power"], p["n"]),
+        }
+        for d in detects
+    ]
     pods.sort(key=lambda p_: p_["r"])
     p0 = pods[0]
     k0 = p0["e"] ** 2 + p0["n"] ** 2
@@ -221,17 +240,21 @@ def run_scenario(sc: dict, tick_hz: int = 10) -> dict:
             for pod in sc["pods"]:
                 if band not in pod.get("bands", [pod.get("band")]):
                     continue
-                range_m = haversine_m(pod["lat"], pod["lon"], state["lat"], state["lon"])
+                range_m = haversine_m(
+                    pod["lat"], pod["lon"], state["lat"], state["lon"]
+                )
                 rssi = fwd_rssi(range_m, em["tx_power_dbm"], em["path_loss_n"])
                 if rssi < pod.get("detect_threshold_dbm", -110):
                     continue
                 detect_count += 1
-                detects_by_band.setdefault(band, []).append({
-                    "node_id": pod["node_id"],
-                    "lat": pod["lat"],
-                    "lon": pod["lon"],
-                    "rssi_dbm": round(rssi),
-                })
+                detects_by_band.setdefault(band, []).append(
+                    {
+                        "node_id": pod["node_id"],
+                        "lat": pod["lat"],
+                        "lon": pod["lon"],
+                        "rssi_dbm": round(rssi),
+                    }
+                )
         # solve per band
         for band, ds in detects_by_band.items():
             if len(ds) < 3:
@@ -259,8 +282,19 @@ def run_scenario(sc: dict, tick_hz: int = 10) -> dict:
             if not (km_changed or cue_changed or heartbeat):
                 continue
             # Compute truth for residual reporting
-            truth = next((emitter_state_at(em, t) for em in sc["emitters"] if em["band"] == band), None)
-            err_m = haversine_m(est_lat, est_lon, truth["lat"], truth["lon"]) if truth else None
+            truth = next(
+                (
+                    emitter_state_at(em, t)
+                    for em in sc["emitters"]
+                    if em["band"] == band
+                ),
+                None,
+            )
+            err_m = (
+                haversine_m(est_lat, est_lon, truth["lat"], truth["lon"])
+                if truth
+                else None
+            )
             alert = {
                 "t_ms": t,
                 "band": band,
@@ -301,7 +335,7 @@ EXPECTED = {
         "first_alert_max_s": 10,
     },
     "gnss_jammer": {
-        "min_alerts": 2,           # one per static position
+        "min_alerts": 2,  # one per static position
         "expected_km_buckets": {6, 8},  # 6 km E, then 8 km NW
         "min_distinct_bearing_cues": 2,
         "max_err_m": 600,
@@ -331,12 +365,21 @@ def check(sc_id: str, result: dict) -> tuple[bool, list[str]]:
         errs.append(f"missing km buckets {sorted(missing_km)} (saw {sorted(km_seen)})")
     cues_seen = {a["cue"] for a in alerts}
     if len(cues_seen) < exp["min_distinct_bearing_cues"]:
-        errs.append(f"only {len(cues_seen)} distinct bearing cues (expected >={exp['min_distinct_bearing_cues']})")
+        errs.append(
+            f"only {len(cues_seen)} distinct bearing cues (expected >={exp['min_distinct_bearing_cues']})"
+        )
     max_err = max((a["err_m"] or 0) for a in alerts) if alerts else 0
     if max_err > exp["max_err_m"]:
-        errs.append(f"max localisation error {max_err:.0f} m (threshold {exp['max_err_m']})")
-    if result["first_alert_ms"] is None or result["first_alert_ms"] > exp["first_alert_max_s"] * 1000:
-        errs.append(f"first alert at {result['first_alert_ms']} ms (threshold {exp['first_alert_max_s']*1000} ms)")
+        errs.append(
+            f"max localisation error {max_err:.0f} m (threshold {exp['max_err_m']})"
+        )
+    if (
+        result["first_alert_ms"] is None
+        or result["first_alert_ms"] > exp["first_alert_max_s"] * 1000
+    ):
+        errs.append(
+            f"first alert at {result['first_alert_ms']} ms (threshold {exp['first_alert_max_s']*1000} ms)"
+        )
     return (len(errs) == 0), errs
 
 
@@ -348,7 +391,9 @@ def main() -> int:
         return 1
     print(f"=== demo_audit: {len(files)} scenarios ===")
     print()
-    print(f"{'scenario':<18} {'alerts':>7} {'km_set':<28} {'cues':>5} {'max_err_m':>10} {'first_s':>8} result")
+    print(
+        f"{'scenario':<18} {'alerts':>7} {'km_set':<28} {'cues':>5} {'max_err_m':>10} {'first_s':>8} result"
+    )
     print("-" * 95)
     all_ok = True
     for f in files:
@@ -361,7 +406,9 @@ def main() -> int:
         cues_seen = len({a["cue"] for a in alerts})
         max_err = max((a["err_m"] or 0) for a in alerts) if alerts else 0
         first_s = (result["first_alert_ms"] or 0) / 1000
-        print(f"{sc['id']:<18} {len(alerts):>7} {str(km_seen):<28} {cues_seen:>5} {max_err:>10.0f} {first_s:>8.1f} {'PASS' if ok else 'FAIL'}")
+        print(
+            f"{sc['id']:<18} {len(alerts):>7} {str(km_seen):<28} {cues_seen:>5} {max_err:>10.0f} {first_s:>8.1f} {'PASS' if ok else 'FAIL'}"
+        )
         for e in errs:
             print(f"   - {e}")
     print()

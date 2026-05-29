@@ -4,11 +4,12 @@
 // without translation.
 
 (function (root) {
-  const PROTOCOL_VERSION = 0x01;
+  const PROTOCOL_VERSION = 0x02;
 
   const MsgType = {
     MSG_DETECT:      0x01,
     MSG_HEARTBEAT:   0x02,
+    MSG_POSITION:    0x03,
     MSG_ALERT:       0x10,
     MSG_ALL_CLEAR:   0x11,
     MSG_CHANNEL_REC: 0x20,
@@ -50,6 +51,21 @@
     4: 'TACTICAL_JAM',
     5: 'ISR_DRONE',
     6: 'LOITER_MUNITION',
+  };
+
+  // Mirrors SensorClass in shared/Protocol.h — sensor modality, decoupled from BandId.
+  const SensorClass = {
+    SENSOR_UNKNOWN:  0x00,
+    SENSOR_RF:       0x01,
+    SENSOR_ACOUSTIC: 0x02,
+    SENSOR_MMWAVE:   0x03,
+    SENSOR_EO:       0x04,
+    SENSOR_MAGNETIC: 0x05,
+    SENSOR_LIDAR:    0x06,
+  };
+  const SensorLabel = {
+    0x00: 'UNKNOWN', 0x01: 'RF', 0x02: 'ACOUSTIC', 0x03: 'MMWAVE',
+    0x04: 'EO', 0x05: 'MAGNETIC', 0x06: 'LIDAR',
   };
 
   const Flags = {
@@ -171,7 +187,7 @@
 
   root.Proto = {
     PROTOCOL_VERSION, MsgType, BandId, BandLabel,
-    ThreatClass, ThreatLabel, Flags,
+    ThreatClass, ThreatLabel, SensorClass, SensorLabel, Flags,
     NODE_ID_MASTER, NODE_ID_BROADCAST,
     CueId, CueTable, cueAssetUrl,
     bearingDegToStep30Cue, metersToKmCue,

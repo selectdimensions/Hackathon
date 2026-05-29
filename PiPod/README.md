@@ -3,7 +3,7 @@
 Pi-side host for the v0.2 hardware pivot. Each pod runs an SDR + a two-stage
 detector and forwards **classified `DetectPacket` payloads over UART** to an
 ESP32-C6 companion that owns the SX1262 and runs the existing RadioLib /
-AES-128-CCM firmware unchanged.
+AES-128-EAX firmware unchanged.
 
 Rationale, SDR selection, and milestones: [../docs/V02_PIVOT.md](../docs/V02_PIVOT.md).
 Issue/change backlog: [../V02_GAP_ANALYSIS.md](../V02_GAP_ANALYSIS.md).

@@ -29,7 +29,7 @@ static constexpr uint16_t PREAMBLE_SYMBOLS  = 8;
 static constexpr uint8_t  SYNC_WORD_PRIVATE = 0x12; // private network
 
 // ---- Airtime estimates (informational; verify with the EU duty-cycle auditor) ----
-// DetectPacket (30 plaintext + 3 envelope + 8 tag = 41 B) @ SF9/125/CR4/5 ~= 288 ms
+// DetectPacket (33 plaintext + 3 envelope + 8 tag = 44 B) @ SF9/125/CR4/5 ~= 288 ms
 // AlertPacket  (10 plaintext + 3 envelope + 8 tag = 21 B) @ SF7/125/CR4/5 ~=  41 ms
 // RekeyPacket  (108 B, chunked across 2 frames)         @ SF9/125/CR4/5 ~= 410 ms
 

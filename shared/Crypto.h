@@ -1,4 +1,4 @@
-// Crypto.h — AES-128-CCM encryption + Ed25519/X25519 rekey helpers.
+// Crypto.h — AES-128-EAX encryption + Ed25519/X25519 rekey helpers.
 // Wraps the rweather/arduinolibs Crypto library so application code never
 // touches primitive crypto directly.
 //
@@ -15,7 +15,7 @@
 
 // rweather/arduinolibs
 #include <AES.h>
-#include <CCM.h>
+#include <EAX.h>
 #include <Ed25519.h>
 #include <Curve25519.h>
 #include <SHA256.h>
@@ -61,7 +61,7 @@ inline void hkdf_sha256(const uint8_t* ikm, size_t ikm_len,
 }
 
 // ----------------------------------------------------------------------
-// Construct the 13-byte AES-CCM nonce:
+// Construct the 13-byte AES-EAX nonce:
 //   [EP, node_id_hi(0), node_id_lo, NC_hi, NC_lo, 0x00 * 8]
 // node_id is uint8_t so node_id_hi is always 0; we reserve the slot for
 // future 16-bit node IDs without an envelope change.
@@ -100,16 +100,16 @@ inline size_t aead_encrypt(const SessionKey& sk,
   // we additionally include epoch in AAD so a relay can't swap epoch bytes.
   uint8_t aad[5] = {plaintext[0], plaintext[1], sender_node_id, sk.epoch, 0x00};
 
-  CCM<AES128> ccm;
-  ccm.setKey(sk.key, SESSION_KEY_LEN);
-  ccm.setIV(nonce, AEAD_NONCE_LEN);
-  ccm.addAuthData(aad, sizeof(aad));
+  EAX<AES128> eax;
+  eax.setKey(sk.key, SESSION_KEY_LEN);
+  eax.setIV(nonce, AEAD_NONCE_LEN);
+  eax.addAuthData(aad, sizeof(aad));
 
   out[0] = sk.epoch;
   out[1] = static_cast<uint8_t>(nc >> 8);
   out[2] = static_cast<uint8_t>(nc & 0xFF);
-  ccm.encrypt(out + 3, plaintext, pt_len);
-  ccm.computeTag(out + 3 + pt_len, AEAD_TAG_LEN);
+  eax.encrypt(out + 3, plaintext, pt_len);
+  eax.computeTag(out + 3 + pt_len, AEAD_TAG_LEN);
   return needed;
 }
 
@@ -138,21 +138,21 @@ inline size_t aead_decrypt(const SessionKey& sk,
   build_nonce(recv_epoch, sender_node_id, nc, nonce);
 
   // We need version + msg_type to build AAD, which live in plaintext byte 0/1.
-  // CCM in this library supports decrypt-then-verify; reconstruct AAD from the
+  // EAX in this library supports decrypt-then-verify; reconstruct AAD from the
   // expected sender. Caller passes sender_node_id; version/msg_type are at
   // ct_offset 0/1 — but those are encrypted, so we bind via post-decrypt check.
-  CCM<AES128> ccm;
-  ccm.setKey(sk.key, SESSION_KEY_LEN);
-  ccm.setIV(nonce, AEAD_NONCE_LEN);
+  EAX<AES128> eax;
+  eax.setKey(sk.key, SESSION_KEY_LEN);
+  eax.setIV(nonce, AEAD_NONCE_LEN);
 
   // Temporarily build AAD with placeholder version/msg_type — receiver will
   // re-verify by recomputing AAD with actual plaintext bytes and checking tag.
   // For simplicity, this scaffold uses node_id + epoch as AAD only:
   uint8_t aad[2] = {sender_node_id, recv_epoch};
-  ccm.addAuthData(aad, sizeof(aad));
+  eax.addAuthData(aad, sizeof(aad));
 
-  ccm.decrypt(plaintext_out, in + 3, ct_len);
-  if (!ccm.checkTag(in + 3 + ct_len, AEAD_TAG_LEN)) return 0;
+  eax.decrypt(plaintext_out, in + 3, ct_len);
+  if (!eax.checkTag(in + 3 + ct_len, AEAD_TAG_LEN)) return 0;
   return ct_len;
 }
 

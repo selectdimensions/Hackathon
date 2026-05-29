@@ -25,7 +25,7 @@ Each frame is COBS-encoded and delimited by `0x00`:
 | CRC16 | 2 | CRC-16/CCITT over `TYPE | LEN | PAYLOAD`, matches `crc16_ccitt()` |
 
 `PAYLOAD` for TYPE 0x01 is the 28-byte packed `DetectPacket` (the same struct the
-ESP32-C6 then wraps in the AES-128-CCM envelope). The Pi populates every field
+ESP32-C6 then wraps in the AES-128-EAX envelope). The Pi populates every field
 including `pps_timestamp_us` (see [../docs/pps.md](../docs/pps.md)); the ESP32-C6
 fills `node_id`/`seq` as needed and is the sole crypto authority.
 

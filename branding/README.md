@@ -8,7 +8,7 @@ You are a senior brand designer + creative director with experience in defense-t
 
 - Project: an open-source, hackathon-built counter-drone RF detection and alert system.
 
-- What it does: a distributed mesh of ESP32-C6 sensor pods listens across RF bands (2.4/5.8 GHz FPV video and control, GNSS L1, 900 MHz/ELRS, future 30–88 MHz tactical). A master node fuses detections via TDOA (time-difference-of-arrival, GPS-PPS synchronized) to localize emitters, encrypts traffic with AES-128-CCM under rotating session keys, and pushes short audio alerts ("threat bearing two-seven-zero, FPV") to soldier-worn nodes via LoRa on 868 MHz.
+- What it does: a distributed mesh of ESP32-C6 sensor pods listens across RF bands (2.4/5.8 GHz FPV video and control, GNSS L1, 900 MHz/ELRS, future 30–88 MHz tactical). A master node fuses detections via TDOA (time-difference-of-arrival, GPS-PPS synchronized) to localize emitters, encrypts traffic with AES-128-EAX under rotating session keys, and pushes short audio alerts ("threat bearing two-seven-zero, FPV") to soldier-worn nodes via LoRa on 868 MHz.
 
 - Subsystems: `LoRaMeshing/`, `Rx/` (soldier hardware), `DataAnalysisLog/`, `UserNotification/`, `ModuleDesign/` (enclosures + PCB), plus a shared protocol/crypto/audio-cue layer.
 
@@ -182,7 +182,7 @@ The system is defined as "dark mode first," using a muted, technical palette tha
 
   /* Primary (Night Shadow) */
   --color-primary: var(--color-neutral-950);
-  
+
   /* Secondary (Drift Gray) */
   --color-secondary: var(--color-neutral-400);
 
@@ -359,7 +359,7 @@ The Tenebris voice is calm, precise, and protective. It balances "quiet professi
 
 ### 50-Word Boilerplate Paragraph
 
-> TENEBRIS is an open-source, hackathon-built counter-drone RF detection and alert system. It deploys a distributed mesh of ESP32-C6 sensor pods to passively sense drone signals via time-difference-of-arrival (TDOA). Encrypted with AES-128-CCM, Tenebris pushes immediate audio alerts to soldier-worn nodes via LoRa, enabling resilient, non-kinetic civil and humanitarian protection.
+> TENEBRIS is an open-source, hackathon-built counter-drone RF detection and alert system. It deploys a distributed mesh of ESP32-C6 sensor pods to passively sense drone signals via time-difference-of-arrival (TDOA). Encrypted with AES-128-EAX, Tenebris pushes immediate audio alerts to soldier-worn nodes via LoRa, enabling resilient, non-kinetic civil and humanitarian protection.
 
 ---
 
@@ -544,7 +544,7 @@ A self-contained HTML/CSS file that visualizes the hero section. Uses the dark d
 </head>
 <body>
 <div class="wrapper">
-  
+
   <header class="wrapper" style="height: auto; padding: 40px 0;">
     <div class="header-logo">
       <svg class="tb-monogram" viewBox="0 0 100 100">
@@ -565,7 +565,7 @@ A self-contained HTML/CSS file that visualizes the hero section. Uses the dark d
         <a href="#github" class="btn btn-secondary">Review Codebase</a>
       </div>
     </div>
-    
+
     <div class="hero-graphic">
       <svg class="tb-monogram watchman-graphic" viewBox="0 0 100 100">
           <path d="M 28 8 L 8 48 L 18 68 L 3 88 L 28 100 L 58 100 L 78 88 L 68 68 L 88 48 L 68 8 L 28 8 Z M 28 8" />

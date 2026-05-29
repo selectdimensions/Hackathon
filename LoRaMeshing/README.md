@@ -60,7 +60,7 @@ The SX1262 SPI bus uses the default `SPI` peripheral on ESP32-C6.
    - `RadioLib`
    - `ArduinoJson`
    - `TinyGPSPlus`
-   - `Crypto` (rweather/arduinolibs — provides AES-CCM, Ed25519, Curve25519, SHA-256)
+   - `Crypto` (rweather/arduinolibs — provides AES-EAX, Ed25519, Curve25519, SHA-256)
 2. Provision keys (one-time per node): see [`../shared/keys/README.md`](../shared/keys/README.md).
 3. Sync shared headers: `pwsh ../shared/sync_shared.ps1`.
 4. Open the sketch in Arduino IDE 2.x, board = "ESP32C6 Dev Module".

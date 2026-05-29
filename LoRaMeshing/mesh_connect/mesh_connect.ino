@@ -199,8 +199,8 @@ void loop() {
 
   if (millis() - lastTx > TX_INTERVAL) {
     lastTx = millis();
- 
+
     sendPacket(255, "Hello from node " + String(NODE_ID));
   }
-  
+
 }
