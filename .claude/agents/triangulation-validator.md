@@ -9,19 +9,21 @@ You validate that the triangulation math produces correct locations on known gro
 
 # Fixtures
 
-Located in `DataAnalysisLog/fixtures/`:
-- `tdoa_3pod_clear.jsonl` — 3 pods, perfect PPS sync, single emitter
-- `tdoa_4pod_noisy.jsonl` — 4 pods, simulated 100 ns timing jitter
-- `rssi_fallback.jsonl` — same emitter but PPS missing on one pod
-- `gnss_jam.jsonl` — Pod C noise-floor rise (no localisation; checks classification path)
+Located in `DataAnalysisLog/fixtures/` (each with a sibling `<name>.truth.json`
+giving ground-truth lat/lon[/altitude_m]; the acoustic one regenerates via
+`make_acoustic_fixture.py`):
+- `acoustic_4pod_3d.jsonl` — 4 acoustic pods (one elevated), GNSS-PPS arrival times → 3D fix (the primary precise path)
+- `fpv_incursion_demo.jsonl` — RF detects (no `.truth.json` → smoke only, RSSI path)
 
-Each fixture has a sibling `<name>.truth.json` with the ground-truth emitter lat/lon.
+Localization order (see `triangulate.py`): **acoustic TDOA → RSSI multilateration → RSSI centroid**.
+RF sample-accurate TDOA is intentionally NOT validated here — at *c* it needs coherent SDRs
+(v0.4); on commodity clocks it is multi-km (gap C1). For RF use bearing/DoA.
 
 # Run
 
 ```bash
 cd DataAnalysisLog
-python triangulate.py --fixture fixtures/tdoa_3pod_clear.jsonl --truth fixtures/tdoa_3pod_clear.truth.json --format json
+python triangulate.py --fixture fixtures/acoustic_4pod_3d.jsonl --truth fixtures/acoustic_4pod_3d.truth.json --format json
 ```
 
 Repeat for each fixture. Capture the JSON output (`{estimated_lat, estimated_lon, error_meters, method}`).
@@ -30,10 +32,8 @@ Repeat for each fixture. Capture the JSON output (`{estimated_lat, estimated_lon
 
 | Fixture | Method | Max error (m) |
 |---|---|---|
-| `tdoa_3pod_clear` | tdoa | 20 |
-| `tdoa_4pod_noisy` | tdoa | 50 |
-| `rssi_fallback` | rssi | 75 |
-| `gnss_jam` | (no localisation; flag must be set) | n/a |
+| `acoustic_4pod_3d` | acoustic_tdoa | 5 |
+| `fpv_incursion_demo` | rssi_multilat | 300 |
 
 Fail loudly on any fixture exceeding its threshold.
 
@@ -50,5 +50,5 @@ Fail loudly on any fixture exceeding its threshold.
 <verbatim solver output for each failing fixture>
 
 ### Notes
-- <e.g. "Bancroft converged on iteration 3 — within budget" or "RSSI path was selected because Pod 2 had ppt_us=0">
+- <e.g. "acoustic Gauss-Newton converged in N iters; 3D error dominated by vertical" or "RSSI multilat path selected — no acoustic pods present">
 ```

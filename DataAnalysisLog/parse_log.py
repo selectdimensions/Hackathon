@@ -22,12 +22,12 @@ from pathlib import Path
 # A pod may run two radios (e.g. SX1262 on g + SX1280 on 2.4 GHz); duty cycle is
 # per-device per-sub-band, so grouping by sub_band already accounts for that.
 SUB_BAND_BUDGET_MS_PER_HOUR = {
-    "g":        36_000,   # 868.0-868.6 MHz, 1%
-    "g1":        3_600,   # 868.7-869.2 MHz, 0.1%
-    "g2":      360_000,   # 869.4-869.65 MHz, 10% (sub-band P, +27 dBm)
-    "g3":       36_000,   # 869.7-870.0 MHz, 1%
-    "eu433":   360_000,   # 433.05-434.79 MHz, 10% (EU 433 SRD)
-    "ism2400":    None,   # 2.4 GHz ISM, no duty cycle (power-limited)
+    "g": 36_000,  # 868.0-868.6 MHz, 1%
+    "g1": 3_600,  # 868.7-869.2 MHz, 0.1%
+    "g2": 360_000,  # 869.4-869.65 MHz, 10% (sub-band P, +27 dBm)
+    "g3": 36_000,  # 869.7-870.0 MHz, 1%
+    "eu433": 360_000,  # 433.05-434.79 MHz, 10% (EU 433 SRD)
+    "ism2400": None,  # 2.4 GHz ISM, no duty cycle (power-limited)
 }
 
 
