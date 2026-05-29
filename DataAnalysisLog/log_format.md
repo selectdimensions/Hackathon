@@ -80,7 +80,18 @@ The master node emits **newline-delimited JSON** (ndjson) over USB serial at 115
 
 ## Duty-cycle audit
 
-`parse_log.py --report-duty-cycle` groups events by `(node_id, sub_band, hour_bucket)` and sums `on_air_ms`. EU sub-band g (868.0–868.6) budget: **36000 ms/hour**.
+`parse_log.py --report-duty-cycle` groups events by `(node_id, sub_band, hour_bucket)`, sums `on_air_ms`, and checks each against its **per-sub-band** budget:
+
+| Sub-band | Range | Budget/hour |
+|---|---|---|
+| `g` | 868.0–868.6 MHz, 1% | 36 000 ms |
+| `g1` | 868.7–869.2 MHz, 0.1% | 3 600 ms |
+| `g2` (sub-band P) | 869.4–869.65 MHz, 10% | 360 000 ms |
+| `g3` | 869.7–870.0 MHz, 1% | 36 000 ms |
+| `eu433` | 433.05–434.79 MHz, 10% | 360 000 ms |
+| `ism2400` | 2.4 GHz | no limit (power-limited) |
+
+Duty cycle is **per-device per-sub-band**, so a dual-radio pod (e.g. SX1262 on `g` + SX1280 on `ism2400`) is tracked per sub-band automatically. The sub-band is derived from `tx_freq_hz`/`rx_freq_hz`; events MAY also carry an explicit `sub_band` (string) and `radio_id` (int) — if `sub_band` is present it overrides the freq-derived value.
 
 The `eu-duty-cycle-auditor` agent runs this automatically and fails the build at 100% utilization.
 

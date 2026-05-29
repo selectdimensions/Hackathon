@@ -18,7 +18,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-EU_SUB_BAND_G_BUDGET_MS_PER_HOUR = 36_000
+# Per-sub-band duty-cycle budgets (ms/hour). None = no duty cycle (power-limited).
+# A pod may run two radios (e.g. SX1262 on g + SX1280 on 2.4 GHz); duty cycle is
+# per-device per-sub-band, so grouping by sub_band already accounts for that.
+SUB_BAND_BUDGET_MS_PER_HOUR = {
+    "g":        36_000,   # 868.0-868.6 MHz, 1%
+    "g1":        3_600,   # 868.7-869.2 MHz, 0.1%
+    "g2":      360_000,   # 869.4-869.65 MHz, 10% (sub-band P, +27 dBm)
+    "g3":       36_000,   # 869.7-870.0 MHz, 1%
+    "eu433":   360_000,   # 433.05-434.79 MHz, 10% (EU 433 SRD)
+    "ism2400":    None,   # 2.4 GHz ISM, no duty cycle (power-limited)
+}
 
 
 def sub_band_for_freq(freq_hz: int) -> str:
@@ -30,6 +40,10 @@ def sub_band_for_freq(freq_hz: int) -> str:
         return "g2"
     if 869_700_000 <= freq_hz <= 870_000_000:
         return "g3"
+    if 433_050_000 <= freq_hz <= 434_790_000:
+        return "eu433"
+    if 2_400_000_000 <= freq_hz <= 2_483_500_000:
+        return "ism2400"
     return "unknown"
 
 
@@ -47,7 +61,7 @@ def report_duty_cycle(events: list[dict]) -> int:
             "%Y-%m-%dT%H:00Z"
         )
         node_id = ev.get("node_id") or ev.get("target_node_id") or 0xFF
-        sub_band = sub_band_for_freq(freq_hz)
+        sub_band = ev.get("sub_band") or sub_band_for_freq(freq_hz)
         buckets[(node_id, sub_band, hour_bucket)] += int(on_air)
 
     fail = 0
@@ -55,7 +69,7 @@ def report_duty_cycle(events: list[dict]) -> int:
         f"{'node':>6}  {'band':>4}  {'hour':<22}  {'tx_ms':>8}  {'budget':>8}  {'pct':>6}  status"
     )
     for (node_id, sub_band, hour), tx_ms in sorted(buckets.items()):
-        budget = EU_SUB_BAND_G_BUDGET_MS_PER_HOUR if sub_band == "g" else None
+        budget = SUB_BAND_BUDGET_MS_PER_HOUR.get(sub_band)
         if budget is None:
             status = "n/a"
             pct = "-"
