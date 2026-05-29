@@ -89,6 +89,14 @@ Each pod must have:
 - GPS-PPS pin wired to GPIO interrupt; `micros()` captured on PPS rising edge gives sub-microsecond cross-node sync.
 - Same view of the emitter — detection threshold must trip on all ≥3 pods within the ~10 ms sync window for TDOA to be solvable.
 
+> **Which signals TDOA actually works on (gap C1).** Sub-µs PPS sync is plenty for **acoustic TDOA**
+> (sound ≈ 343 m/s → 1 ms ≈ 0.34 m), which is the realistic sub-metre localization mode. It is **not**
+> enough for **RF-TDOA**: an RF wavefront travels at *c*, so ns-level sync is required and commodity
+> SDR/AD8318 pods can't hit it (the "sub-µs" timestamp is the threshold-trip time, not a coherent
+> sample tag). For RF emitters use **RSSI multilateration** (fallback above) or **KrakenSDR DoA**
+> bearings; reserve hyperbolic RF-TDOA for coherent SDRs (v0.4 research). See
+> [`pod-sensor-reference.md`](pod-sensor-reference.md) §1 and [`docs/V02_PIVOT.md`](docs/V02_PIVOT.md) §4.
+
 ## Sub-band frequency plan (per pod variant)
 
 | Pod variant | Frontend | Detection method | Output to packet |
