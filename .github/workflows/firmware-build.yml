@@ -54,6 +54,12 @@ jobs:
           arduino-cli lib install "ArduinoJson"
           arduino-cli lib install "TinyGPSPlus"
           arduino-cli lib install "Crypto"
+          echo "=== DIAGNOSE: lib search crypto ==="
+          arduino-cli lib search crypto 2>&1 | head -60
+          echo "=== DIAGNOSE: where did CCM.h / AES.h / Ed25519.h land? ==="
+          find "$HOME/Arduino/libraries" -iname "CCM.h" -o -iname "AES.h" -o -iname "Ed25519.h" 2>/dev/null
+          echo "=== DIAGNOSE: Crypto lib tree ==="
+          ls -R "$HOME/Arduino/libraries/Crypto" 2>/dev/null | head -80 || echo "(no Crypto dir)"
 
       - name: Stage shared headers
         # CI can't run sync_shared.ps1 (PowerShell); copy the single-source-of-truth
