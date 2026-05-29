@@ -1,0 +1,66 @@
+name: firmware-build
+
+# Root-level so GitHub actually runs it (workflows under LoRaMeshing/.github,
+# Rx/.github, etc. are NOT executed — GitHub only runs .github/workflows at the
+# repo root). Compile-checks the canonical sketches against ESP32-C6.
+
+on:
+  push:
+    paths:
+      - 'LoRaMeshing/SensorNode/**'
+      - 'LoRaMeshing/MasterNode/**'
+      - 'Rx/SoldierNode/**'
+      - 'shared/**'
+      - '.github/workflows/firmware-build.yml'
+  pull_request:
+    paths:
+      - 'LoRaMeshing/SensorNode/**'
+      - 'LoRaMeshing/MasterNode/**'
+      - 'Rx/SoldierNode/**'
+      - 'shared/**'
+      - '.github/workflows/firmware-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  arduino-cli:
+    name: compile ${{ matrix.sketch }} (ESP32-C6)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sketch: SensorNode
+            dir: LoRaMeshing/SensorNode
+          - sketch: MasterNode
+            dir: LoRaMeshing/MasterNode
+          - sketch: SoldierNode
+            dir: Rx/SoldierNode
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+      - name: Install ESP32 board package
+        run: |
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install "RadioLib"
+          arduino-cli lib install "ArduinoJson"
+          arduino-cli lib install "TinyGPSPlus"
+          arduino-cli lib install "Crypto"
+
+      - name: Stage shared headers
+        # CI can't run sync_shared.ps1 (PowerShell); copy the single-source-of-truth
+        # headers (Protocol.h, LoRaConfig.h, Crypto.h, RadioLink.h, AudioCues.h) in.
+        run: cp shared/*.h ${{ matrix.dir }}/
+
+      - name: Compile ${{ matrix.sketch }}
+        run: arduino-cli compile --fqbn esp32:esp32:esp32c6 --warnings all ${{ matrix.dir }}
