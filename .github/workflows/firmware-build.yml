@@ -9,6 +9,7 @@ on:
     paths:
       - 'LoRaMeshing/SensorNode/**'
       - 'LoRaMeshing/MasterNode/**'
+      - 'LoRaMeshing/AcousticPod/**'
       - 'Rx/SoldierNode/**'
       - 'shared/**'
       - '.github/workflows/firmware-build.yml'
@@ -16,6 +17,7 @@ on:
     paths:
       - 'LoRaMeshing/SensorNode/**'
       - 'LoRaMeshing/MasterNode/**'
+      - 'LoRaMeshing/AcousticPod/**'
       - 'Rx/SoldierNode/**'
       - 'shared/**'
       - '.github/workflows/firmware-build.yml'
@@ -35,6 +37,8 @@ jobs:
             dir: LoRaMeshing/SensorNode
           - sketch: MasterNode
             dir: LoRaMeshing/MasterNode
+          - sketch: AcousticPod
+            dir: LoRaMeshing/AcousticPod
           - sketch: SoldierNode
             dir: Rx/SoldierNode
     steps:
