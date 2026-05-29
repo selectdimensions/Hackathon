@@ -16,6 +16,7 @@
 #include "LoRaConfig.h"
 #include "AudioCues.h"
 #include "Crypto.h"
+#include "RadioLink.h"
 // #include "PinnedKeys.h"  // generated; uncomment after gen_pinned_header.ps1
 
 using namespace rftm;
@@ -36,6 +37,7 @@ static const int PIN_I2S_LRCLK = 13;
 static const int PIN_I2S_DIN   = 14;
 
 SX1262 radio = new Module(PIN_LORA_NSS, PIN_LORA_DIO1, PIN_LORA_RST, PIN_LORA_BUSY);
+RadioSet<1> g_radios;  // downlink RX plane; binds the SX1262 below
 
 // ----- Crypto -----
 static SessionKey g_session_current;
@@ -159,6 +161,7 @@ void setup() {
     Serial.println(F("LoRa init failed — halting."));
     while (true) { delay(1000); }
   }
+  g_radios[0].bind(&radio, sx1262_downlink_g());  // downlink RX (868.3 MHz)
 
   g_cue_queue = xQueueCreate(8, sizeof(uint8_t));
 

@@ -18,6 +18,7 @@
 #include "Protocol.h"
 #include "LoRaConfig.h"
 #include "Crypto.h"
+#include "RadioLink.h"
 // #include "PinnedKeys.h"  // generated; uncomment after running gen_pinned_header.ps1
 
 using namespace rftm;
@@ -41,7 +42,10 @@ static const int PIN_GPS_TX    = 17;  // ESP32-C6 -> GPS RX
 static const int PIN_RF_DETECT_ADC = 1;  // band-specific analog frontend
 
 // ----- Radio + GPS objects -----
+// Primary SX1262 (sub-GHz). A redundant SX1278/SX1280 would be added as a second
+// concrete Module + g_radios[1].bind(...) for failover (see shared/RadioLink.h).
 SX1262 radio = new Module(PIN_LORA_NSS, PIN_LORA_DIO1, PIN_LORA_RST, PIN_LORA_BUSY);
+RadioSet<1> g_radios;  // index 0 = primary; grow to RadioSet<2> for a redundant radio
 TinyGPSPlus gps;
 HardwareSerial GpsSerial(1);
 
@@ -116,18 +120,15 @@ static void task_lora_tx(void* /*arg*/) {
                               out, sizeof(out));
       if (n == 0) continue;
 
-      // CSMA: CAD then TX with random backoff on busy.
+      // CSMA: CAD-gated TX with random backoff on busy. transmitWithFailover()
+      // tries the primary radio (and any redundant radios) once each; we wrap it
+      // in the backoff/retry loop from LoRaConfig.h.
+      radio.setFrequency(FREQ_A_MHZ);
       for (uint8_t attempt = 0; attempt < CAD_MAX_RETRIES; ++attempt) {
-        int state = radio.scanChannel();
-        if (state == RADIOLIB_PREAMBLE_DETECTED) {
-          uint16_t backoff = CAD_BACKOFF_MIN_MS +
-                             (esp_random() % (CAD_BACKOFF_MAX_MS - CAD_BACKOFF_MIN_MS));
-          vTaskDelay(pdMS_TO_TICKS(backoff));
-          continue;
-        }
-        radio.setFrequency(FREQ_A_MHZ);
-        radio.transmit(out, n);
-        break;
+        if (g_radios.transmitWithFailover(out, n) >= 0) break;  // sent
+        uint16_t backoff = CAD_BACKOFF_MIN_MS +
+                           (esp_random() % (CAD_BACKOFF_MAX_MS - CAD_BACKOFF_MIN_MS));
+        vTaskDelay(pdMS_TO_TICKS(backoff));
       }
     }
   }
@@ -174,6 +175,7 @@ void setup() {
     Serial.println(F("LoRa init failed — halting."));
     while (true) { delay(1000); }
   }
+  g_radios[0].bind(&radio, sx1262_uplink_g());  // primary: 868.1 MHz, sub-band g
 
   g_tx_queue = xQueueCreate(8, sizeof(DetectPacket));
 

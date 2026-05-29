@@ -65,6 +65,13 @@ inline RadioDescriptor sx1262_uplink_g() {
           DUTY_EU868_G};
 }
 
+// Current downlink: SX1262 on 868.3 MHz, sub-band g (1%) — master -> soldier.
+inline RadioDescriptor sx1262_downlink_g() {
+  return {RADIO_SX1262, FREQ_B_MHZ, BANDWIDTH_HZ / 1000.0f, SF_DOWNLINK,
+          CODING_RATE, TX_POWER_DBM, SYNC_WORD_PRIVATE, PREAMBLE_SYMBOLS,
+          DUTY_EU868_G};
+}
+
 // High-rate downlink: SX1262 on sub-band P (10%, +27 dBm) — master -> soldier.
 inline RadioDescriptor sx1262_downlink_p() {
   return {RADIO_SX1262, FREQ_B_HIGH_RATE_MHZ, BANDWIDTH_HZ / 1000.0f, SF_DOWNLINK,
@@ -112,7 +119,7 @@ class RadioChannel {
   }
   // CAD before TX (LBT). True if the channel is currently busy.
   bool channelBusy() {
-    return phy_ && phy_->scanChannel() == RADIOLIB_LORA_DETECTED;
+    return phy_ && phy_->scanChannel() == RADIOLIB_PREAMBLE_DETECTED;
   }
 
  private:

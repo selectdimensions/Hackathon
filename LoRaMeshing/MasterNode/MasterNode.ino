@@ -17,6 +17,7 @@
 #include "Protocol.h"
 #include "LoRaConfig.h"
 #include "Crypto.h"
+#include "RadioLink.h"
 // #include "PinnedKeys.h"  // generated; uncomment after gen_pinned_header.ps1
 
 using namespace rftm;
@@ -33,6 +34,9 @@ static const int PIN_LORA_RST  = 4;
 static const int PIN_LORA_BUSY = 6;
 
 SX1262 radio = new Module(PIN_LORA_NSS, PIN_LORA_DIO1, PIN_LORA_RST, PIN_LORA_BUSY);
+// Master hosts the primary sub-GHz radio here; additional radios (SX1278 433,
+// SX1280 2.4 GHz) are added as more concrete Modules + g_radios[i].bind(...).
+RadioSet<1> g_radios;
 
 // ----- Session state -----
 static SessionKey g_session_current;
@@ -152,6 +156,7 @@ void setup() {
     Serial.println(F("LoRa init failed — halting."));
     while (true) { delay(1000); }
   }
+  g_radios[0].bind(&radio, sx1262_uplink_g());  // primary RX plane (868.1 MHz)
 
   g_reg_mtx = xSemaphoreCreateMutex();
   memset(g_registry, 0, sizeof(g_registry));
