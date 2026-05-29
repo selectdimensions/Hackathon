@@ -1,6 +1,15 @@
 # pre-commit hooks. Install once: `pip install pre-commit && pre-commit install`.
 # Runs on every `git commit` and also in CI (.github/workflows/ci.yml).
 
+# Never normalize vendored third-party code or ASCII CAD exports (STEP files
+# have no null bytes so pre-commit treats them as text and would mangle them).
+exclude: |
+  (?x)^(
+    demo/vendor/.*|
+    deck/.*\.fodp|
+    .*\.(step|STEP|stp|STP|stl|STL)
+  )$
+
 repos:
   # --- Stock hooks (whitespace, EOF, large files, merge markers, secret patterns) ---
   - repo: https://github.com/pre-commit/pre-commit-hooks

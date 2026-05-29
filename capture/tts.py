@@ -1,13 +1,14 @@
 """tts.py — synthesize each narration line to WAV via Windows SAPI over COM.
 Offline, built into Windows, no PowerShell. Produces line_NN.wav for the mux."""
+
 import json
 import os
 import win32com.client
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SSFM_CREATE_FOR_WRITE = 3
-NARR = os.environ.get("NARR", "narration.json")     # input timeline
-PREFIX = os.environ.get("PREFIX", "line_")          # output wav prefix
+NARR = os.environ.get("NARR", "narration.json")  # input timeline
+PREFIX = os.environ.get("PREFIX", "line_")  # output wav prefix
 
 nav = json.load(open(os.path.join(HERE, NARR), encoding="utf-8"))
 voice = win32com.client.Dispatch("SAPI.SpVoice")

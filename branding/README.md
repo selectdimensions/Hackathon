@@ -182,7 +182,7 @@ The system is defined as "dark mode first," using a muted, technical palette tha
 
   /* Primary (Night Shadow) */
   --color-primary: var(--color-neutral-950);
-  
+
   /* Secondary (Drift Gray) */
   --color-secondary: var(--color-neutral-400);
 
@@ -544,7 +544,7 @@ A self-contained HTML/CSS file that visualizes the hero section. Uses the dark d
 </head>
 <body>
 <div class="wrapper">
-  
+
   <header class="wrapper" style="height: auto; padding: 40px 0;">
     <div class="header-logo">
       <svg class="tb-monogram" viewBox="0 0 100 100">
@@ -565,7 +565,7 @@ A self-contained HTML/CSS file that visualizes the hero section. Uses the dark d
         <a href="#github" class="btn btn-secondary">Review Codebase</a>
       </div>
     </div>
-    
+
     <div class="hero-graphic">
       <svg class="tb-monogram watchman-graphic" viewBox="0 0 100 100">
           <path d="M 28 8 L 8 48 L 18 68 L 3 88 L 28 100 L 58 100 L 78 88 L 68 68 L 88 48 L 68 8 L 28 8 Z M 28 8" />

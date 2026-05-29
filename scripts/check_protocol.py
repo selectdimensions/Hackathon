@@ -36,10 +36,18 @@ PACKET_FIELD_CRC_RE = re.compile(r"uint16_t\s+crc16\s*;")
 
 # Scalar type sizes for a __attribute__((packed)) struct (no padding).
 TYPE_SIZES = {
-    "uint8_t": 1, "int8_t": 1, "char": 1, "bool": 1,
-    "uint16_t": 2, "int16_t": 2,
-    "uint32_t": 4, "int32_t": 4, "float": 4,
-    "uint64_t": 8, "int64_t": 8, "double": 8,
+    "uint8_t": 1,
+    "int8_t": 1,
+    "char": 1,
+    "bool": 1,
+    "uint16_t": 2,
+    "int16_t": 2,
+    "uint32_t": 4,
+    "int32_t": 4,
+    "float": 4,
+    "uint64_t": 8,
+    "int64_t": 8,
+    "double": 8,
 }
 FIELD_RE = re.compile(
     r"(u?int(?:8|16|32|64)_t|float|double|char|bool)\s+\w+\s*(?:\[\s*(\d+)\s*\])?\s*;"

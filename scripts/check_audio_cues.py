@@ -141,7 +141,9 @@ def main() -> int:
         lang_dir = args.audioclips / lang
         if not lang_dir.exists():
             if mp3_referenced:
-                errs.append(f"{lang_dir} missing but manifest references {len(mp3_referenced)} MP3 cues")
+                errs.append(
+                    f"{lang_dir} missing but manifest references {len(mp3_referenced)} MP3 cues"
+                )
             continue
         actual = {p.name for p in lang_dir.glob("*.mp3")}
         for fn in sorted(mp3_referenced - actual):
