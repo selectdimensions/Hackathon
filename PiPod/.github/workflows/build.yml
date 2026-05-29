@@ -1,0 +1,37 @@
+name: pipod-build
+
+on:
+  push:
+    paths:
+      - 'PiPod/**'
+  pull_request:
+    paths:
+      - 'PiPod/**'
+
+jobs:
+  detector:
+    name: C energy detector (arm64)
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SDR / DSP build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librtlsdr-dev libhackrf-dev libfftw3-dev libliquid-dev
+      - name: Build
+        run: make -C PiPod/detector
+
+  classifier:
+    name: Python classifiers (lint + replay)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: pip install -r PiPod/classifier/requirements.txt ruff pytest
+      - name: Lint
+        run: ruff check PiPod/classifier
+      - name: Replay tests (skip until fixtures land)
+        run: pytest -q PiPod/classifier

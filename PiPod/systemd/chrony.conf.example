@@ -1,0 +1,15 @@
+# Example /etc/chrony/chrony.conf for a PiPod (gap C3). Pairs with:
+#   /boot/firmware/config.txt: dtoverlay=pps-gpio,gpiopin=18   (23 for MeshAdv-Pi)
+# Use chrony, not ntpd — it handles SHM-from-gpsd + PPS natively and locks faster.
+
+# Coarse time from gpsd's NMEA via shared memory (not selected for the final solve).
+refclock SHM 0 refid GPS precision 1e-1 noselect
+
+# The disciplined source: GPS 1-PPS on /dev/pps0, locked to the GPS refclock.
+refclock PPS /dev/pps0 refid PPS lock GPS prefer
+
+# Fallback network time while GPS acquires.
+pool 2.pool.ntp.org iburst
+
+makestep 1.0 3
+rtcsync

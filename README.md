@@ -13,7 +13,7 @@ flowchart TB
     PodA["Pod A<br/>5.8 GHz FPV video"]
     PodB["Pod B<br/>2.4 GHz FPV control"]
     PodC["Pod C<br/>GNSS L1 jam"]
-    PodD["Pod D<br/>900 MHz / ELRS"]
+    PodD["Pod D<br/>868 MHz EU / ELRS-EU"]
 
     Master["Master Node<br/>TDOA + RSSI solve<br/>Rekey broadcaster"]
     Soldier1["Soldier Node 1<br/>I2S DAC -> audio"]
@@ -104,6 +104,8 @@ Conventional commit prefixes: `feat:`, `fix:`, `proto:` (wire-format change), `c
 ## Status
 
 v0.2 — protocol + brand layer + interactive demo + verification harness landed. Firmware bodies are still skeletons (see TODOs in `LoRaMeshing/MasterNode/MasterNode.ino` and `Rx/SoldierNode/SoldierNode.ino`). Out-of-scope (Motorola DMR/P25 bridge, MQTT/Grafana analytics, TTS pipeline) is documented in [DataAnalysisLog/TODO_motorola_bridge.md](DataAnalysisLog/TODO_motorola_bridge.md).
+
+**Next milestone: `v0.3-hardware`.** The proposed move from AD8318 log-detector pods to Raspberry Pi 5 + RTL-SDR/HackRF pods (with the ESP32-C6 retained as a per-pod LoRa/crypto companion, plus a KrakenSDR at the master site for direction-finding) is specced in [docs/V02_PIVOT.md](docs/V02_PIVOT.md). Its gap analysis against the current scaffold — issues + concrete changes — is tracked in [V02_GAP_ANALYSIS.md](V02_GAP_ANALYSIS.md). (Note: the source report is titled "v0.2" by its author; in this repo v0.2 is already the demo/protocol milestone, so the SDR/hardware track is tracked as **`v0.3-hardware`**.)
 
 ## Live demo
 

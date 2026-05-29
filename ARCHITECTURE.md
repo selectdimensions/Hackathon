@@ -1,5 +1,10 @@
 # Architecture
 
+> This document describes the current ESP32-C6 + AD8318 architecture. The proposed
+> **`v0.3-hardware`** pivot (Pi 5 + RTL-SDR/HackRF pods + ESP32-C6 companion +
+> KrakenSDR DoA at the master) is specced in [docs/V02_PIVOT.md](docs/V02_PIVOT.md),
+> with a gap analysis in [V02_GAP_ANALYSIS.md](V02_GAP_ANALYSIS.md).
+
 ## Subsystems
 
 ```mermaid
@@ -91,7 +96,7 @@ Each pod must have:
 | **A — 5.8 GHz FPV video** | 5.8 GHz LNA → AD8318 log detector → ADC | Power threshold + dwell time | `band_id=BAND_5800_MHZ`, `rssi_dbm` from log-detector mapping |
 | **B — 2.4 GHz FPV control** | 2.4 GHz LNA → AD8318 → ADC | Power threshold + FHSS pattern detect | `band_id=BAND_2400_MHZ`, `flags.FREQ_HOPPER` set on dwell pattern |
 | **C — GNSS L1 jam** | 1.575 GHz SAW → LNA → log detector | Noise-floor rise vs baseline | `band_id=BAND_GNSS_L1`, `flags.GNSS_JAM_SUSPECTED` |
-| **D — 900 MHz / ELRS** | 900 MHz LNA → log detector | Power + LoRa-chirp shape detect | `band_id=BAND_433_915_MHZ` |
-| **E (future) — 30–88 MHz tactical** | HF/VHF SDR (RTL-SDR v4 or similar) | Wideband sweep + carrier classify | `band_id=BAND_30_88_MHZ` |
+| **D — 868 MHz EU / ELRS-EU** | 868 MHz LNA → log detector | Power + LoRa-chirp shape detect | `band_id=BAND_433_868_MHZ` |
+| **E (future) — 30–88 MHz tactical** | HF/VHF SDR (RTL-SDR Blog V3, R820T2; track V4L/R828S refresh) | Wideband sweep + carrier classify | `band_id=BAND_30_88_MHZ` |
 
 The master node's "which channel is unjammed" recommendation comes from comparing `noise_floor_dbm` reports across pods over time and picking the lowest-noise band.

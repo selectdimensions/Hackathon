@@ -28,7 +28,7 @@ enum MsgType : uint8_t {
 enum BandId : uint8_t {
   BAND_UNKNOWN     = 0x00,
   BAND_30_88_MHZ   = 0x01,  // tactical comms (Azart / Akveduk)
-  BAND_433_915_MHZ = 0x02,  // ELRS, Crossfire, telemetry, LoRa
+  BAND_433_868_MHZ = 0x02,  // EU 868 ISM (ELRS-EU, LoRa, generic SRD) + 433 EU SRD
   BAND_GNSS_L1     = 0x03,  // 1.575 GHz GPS / 1.602 GLONASS — jam detector
   BAND_2400_MHZ    = 0x04,  // DJI control, ELRS 2.4
   BAND_5800_MHZ    = 0x05,  // FPV video — highest-priority kamikaze indicator

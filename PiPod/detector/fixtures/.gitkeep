@@ -1,0 +1,3 @@
+# Recorded I/Q fixtures for classifier replay tests (gap F2).
+# One capture (or synthesis script) per pod variant: GNSS L1 jam, analog 5.8 FPV,
+# OcuSync burst, ELRS FHSS, LoRa chirp. Keep files small or generate on the fly.
