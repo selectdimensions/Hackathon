@@ -56,7 +56,7 @@
         rx_freq_hz: 868100000,
         rx_rssi_dbm: -88,
         epoch: 7,
-        on_air_ms: 154,
+        on_air_ms: 288,
         // demo-only annotations (ignored by parse_log.py — extra fields allowed)
         _pod_label: state.label,
         _is_live: !!state.isLive,

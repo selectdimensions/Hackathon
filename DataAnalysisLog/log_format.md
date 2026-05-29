@@ -34,7 +34,7 @@ The master node emits **newline-delimited JSON** (ndjson) over USB serial at 115
   "rx_freq_hz": 868100000,
   "rx_rssi_dbm": -88,
   "epoch": 7,
-  "on_air_ms": 154
+  "on_air_ms": 288
 }
 ```
 

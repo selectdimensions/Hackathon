@@ -19,10 +19,10 @@ flowchart TB
     Soldier1["Soldier Node 1<br/>I2S DAC -> audio"]
     Soldier2["Soldier Node 2<br/>I2S DAC -> audio"]
 
-    PodA -- "868.1 MHz<br/>DetectPacket (39B enc)" --> Master
-    PodB -- "868.1 MHz<br/>DetectPacket (39B enc)" --> Master
-    PodC -- "868.1 MHz<br/>DetectPacket (39B enc)" --> Master
-    PodD -- "868.1 MHz<br/>DetectPacket (39B enc)" --> Master
+    PodA -- "868.1 MHz<br/>DetectPacket (41B enc)" --> Master
+    PodB -- "868.1 MHz<br/>DetectPacket (41B enc)" --> Master
+    PodC -- "868.1 MHz<br/>DetectPacket (41B enc)" --> Master
+    PodD -- "868.1 MHz<br/>DetectPacket (41B enc)" --> Master
 
     Master -- "868.3 MHz<br/>AlertPacket (21B enc)<br/>bearing + dist + cue_id" --> Soldier1
     Master -- "868.3 MHz<br/>AlertPacket (21B enc)" --> Soldier2

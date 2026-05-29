@@ -45,7 +45,7 @@ sequenceDiagram
     RF->>Pod: Analog detector trips threshold
     Pod->>Pod: Build DetectPacket {ts_pps, rssi, snr, lat/lon, ...}
     Pod->>Pod: AES-128-CCM encrypt under K_session[epoch]
-    Pod->>LoRaA: TX (CAD-gated, 39 B on-air, ~155 ms)
+    Pod->>LoRaA: TX (CAD-gated, 41 B on-air, ~288 ms)
     LoRaA->>Master: RX on Freq A
     Master->>Master: Verify CCM tag, decrypt, CRC check
     Master->>Master: Insert into node registry, run TDOA solve
