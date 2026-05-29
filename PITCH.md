@@ -166,6 +166,6 @@ python -m http.server 8000
 - Architecture diagram + security model — [README.md](README.md)
 - Packet lifecycle + sub-band table (Pod A–E) — [ARCHITECTURE.md](ARCHITECTURE.md)
 - Demo scenarios + audio toggles — [demo/README.md](demo/README.md)
-- Wire format (39 B detect, 21 B alert) — [shared/Protocol.h](shared/Protocol.h)
+- Wire format (41 B detect, 21 B alert) — [shared/Protocol.h](shared/Protocol.h)
 - Bearing / distance cue map — [shared/AudioCues.h](shared/AudioCues.h)
 - EU 36 s/hour duty-cycle audit — [.claude/agents/eu-duty-cycle-auditor.md](.claude/agents/eu-duty-cycle-auditor.md)

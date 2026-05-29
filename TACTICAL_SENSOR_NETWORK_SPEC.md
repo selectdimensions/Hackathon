@@ -45,6 +45,19 @@ Example:
 
 **To achieve ±50 cm:** All pods must sync to **±1.67 nanoseconds (1.67 ns)**.
 
+> **⚠️ Feasibility reconciliation (gap C1).** The ±50 cm figure above assumes a *signal whose
+> arrival you can timestamp to ns* — and on commodity hardware that is the catch:
+> - **RF-TDOA at ±1.67 ns is NOT achievable** on host-timestamped RTL-SDR / HackRF pods: USB-burst
+>   jitter alone is tens of µs to tens of ms, i.e. **hundreds of metres to multi-km** of error. ns-level
+>   RF-TDOA needs **coherent, clock-shared SDRs** (USRP-class) with a common reference — out of the
+>   commodity-pod budget. See [`docs/V02_PIVOT.md`](docs/V02_PIVOT.md) §4.
+> - **Acoustic TDOA IS the realistic sub-metre path.** Sound travels at ~343 m/s, so **1 ms** of clock
+>   error ≈ **0.34 m** — 6 orders of magnitude more forgiving than RF. GNSS-PPS-disciplined ESP32
+>   `micros()` (tens of ns) is far more than good enough. This is the flagship localization mode; see
+>   [`pod-sensor-reference.md`](pod-sensor-reference.md) §1.
+> - **For RF emitters**, prefer **bearing/AoA** (KrakenSDR DoA, cross-bearings from ≥2 sites) over
+>   hyperbolic RF-TDOA. Treat the ±50 cm RF number as an **aspirational, coherent-SDR-only** target.
+
 ### **2.2: Timing Sync Options**
 
 | Method | Accuracy | Cost/Pod | Complexity | Jamming Risk |

@@ -45,7 +45,7 @@ sequenceDiagram
     RF->>Pod: Analog detector trips threshold
     Pod->>Pod: Build DetectPacket {ts_pps, rssi, snr, lat/lon, ...}
     Pod->>Pod: AES-128-CCM encrypt under K_session[epoch]
-    Pod->>LoRaA: TX (CAD-gated, 39 B on-air, ~155 ms)
+    Pod->>LoRaA: TX (CAD-gated, 41 B on-air, ~288 ms)
     LoRaA->>Master: RX on Freq A
     Master->>Master: Verify CCM tag, decrypt, CRC check
     Master->>Master: Insert into node registry, run TDOA solve
@@ -88,6 +88,14 @@ Each pod must have:
 - Surveyed lat/lon (or live GNSS lock, ideally both)
 - GPS-PPS pin wired to GPIO interrupt; `micros()` captured on PPS rising edge gives sub-microsecond cross-node sync.
 - Same view of the emitter — detection threshold must trip on all ≥3 pods within the ~10 ms sync window for TDOA to be solvable.
+
+> **Which signals TDOA actually works on (gap C1).** Sub-µs PPS sync is plenty for **acoustic TDOA**
+> (sound ≈ 343 m/s → 1 ms ≈ 0.34 m), which is the realistic sub-metre localization mode. It is **not**
+> enough for **RF-TDOA**: an RF wavefront travels at *c*, so ns-level sync is required and commodity
+> SDR/AD8318 pods can't hit it (the "sub-µs" timestamp is the threshold-trip time, not a coherent
+> sample tag). For RF emitters use **RSSI multilateration** (fallback above) or **KrakenSDR DoA**
+> bearings; reserve hyperbolic RF-TDOA for coherent SDRs (v0.4 research). See
+> [`pod-sensor-reference.md`](pod-sensor-reference.md) §1 and [`docs/V02_PIVOT.md`](docs/V02_PIVOT.md) §4.
 
 ## Sub-band frequency plan (per pod variant)
 

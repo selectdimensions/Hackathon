@@ -34,6 +34,29 @@ MSG_ENUM_RE = re.compile(r"MSG_(\w+)\s*=\s*0x([0-9A-Fa-f]+)")
 PACKET_FIELD_VERSION_RE = re.compile(r"uint8_t\s+version\s*;")
 PACKET_FIELD_CRC_RE = re.compile(r"uint16_t\s+crc16\s*;")
 
+# Scalar type sizes for a __attribute__((packed)) struct (no padding).
+TYPE_SIZES = {
+    "uint8_t": 1, "int8_t": 1, "char": 1, "bool": 1,
+    "uint16_t": 2, "int16_t": 2,
+    "uint32_t": 4, "int32_t": 4, "float": 4,
+    "uint64_t": 8, "int64_t": 8, "double": 8,
+}
+FIELD_RE = re.compile(
+    r"(u?int(?:8|16|32|64)_t|float|double|char|bool)\s+\w+\s*(?:\[\s*(\d+)\s*\])?\s*;"
+)
+
+
+def packed_size(body: str) -> int | None:
+    """Sum the byte size of every field in a packed-struct body, or None if a
+    field uses a type we don't know (so we skip rather than false-positive)."""
+    total = 0
+    for m in FIELD_RE.finditer(body):
+        base = TYPE_SIZES.get(m.group(1))
+        if base is None:
+            return None
+        total += base * (int(m.group(2)) if m.group(2) else 1)
+    return total
+
 
 def check_protocol_h(path: Path) -> list[str]:
     errs: list[str] = []
@@ -55,6 +78,19 @@ def check_protocol_h(path: Path) -> list[str]:
         if name not in asserted:
             errs.append(
                 f"{path}: struct {name} missing static_assert(sizeof(...) == N)"
+            )
+
+    # 2b. The asserted N must equal the real packed field-sum (catches a wrong
+    #     hand-written size, which a C++ compiler would reject but humans miss).
+    for m in STRUCT_RE.finditer(src):
+        name = m.group(1)
+        if name not in asserted:
+            continue
+        real = packed_size(m.group(2))
+        if real is not None and real != asserted[name]:
+            errs.append(
+                f"{path}: struct {name} static_assert says {asserted[name]} "
+                f"but packed fields sum to {real}"
             )
 
     # 3. Every *Packet must have version + crc16 (RekeyPacket excepted from crc16

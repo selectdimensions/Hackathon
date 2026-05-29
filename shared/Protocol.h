@@ -90,7 +90,7 @@ static constexpr uint8_t  SESSION_KEY_LEN  = 16;  // AES-128
 
 // =====================================================================
 // Sensor -> Master detection packet (encrypted body)
-// Target on-air: 28 plaintext + 3 envelope + 8 tag = 39 bytes
+// Target on-air: 30 plaintext + 3 envelope + 8 tag = 41 bytes
 // =====================================================================
 struct __attribute__((packed)) DetectPacket {
   uint8_t  version;          // PROTOCOL_VERSION
@@ -108,7 +108,7 @@ struct __attribute__((packed)) DetectPacket {
   uint16_t seq;              // sequence (dedup at master)
   uint16_t crc16;            // CRC-16/CCITT over all preceding bytes
 };
-static_assert(sizeof(DetectPacket) == 28, "DetectPacket layout drift — update ARCHITECTURE.md airtime table");
+static_assert(sizeof(DetectPacket) == 30, "DetectPacket layout drift — update ARCHITECTURE.md airtime table");
 
 // =====================================================================
 // Sensor -> Master heartbeat (encrypted body). Sent every 30 s if no
