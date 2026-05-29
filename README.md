@@ -107,6 +107,8 @@ v0.2 — protocol + brand layer + interactive demo + verification harness landed
 
 **Next milestone: `v0.3-hardware`.** The proposed move from AD8318 log-detector pods to Raspberry Pi 5 + RTL-SDR/HackRF pods (with the ESP32-C6 retained as a per-pod LoRa/crypto companion, plus a KrakenSDR at the master site for direction-finding) is specced in [docs/V02_PIVOT.md](docs/V02_PIVOT.md). Its gap analysis against the current scaffold — issues + concrete changes — is tracked in [V02_GAP_ANALYSIS.md](V02_GAP_ANALYSIS.md). (Note: the source report is titled "v0.2" by its author; in this repo v0.2 is already the demo/protocol milestone, so the SDR/hardware track is tracked as **`v0.3-hardware`**.)
 
+The pod platform (fixed bus + swappable sensor) and the sensor catalog with localization roles live in [pod-sensor-reference.md](pod-sensor-reference.md); the milestone plan is [docs/ROADMAP.md](docs/ROADMAP.md); the system/pitch-level spec is [TACTICAL_SENSOR_NETWORK_SPEC.md](TACTICAL_SENSOR_NETWORK_SPEC.md).
+
 ## Live demo
 
 [demo/](demo/) is a self-contained HTML visualisation of the full pipeline running on a Leaflet map — 25-pod LoRa mesh, command-and-control node, soldier audio cues — driven by simulated `DetectPacket` / `AlertPacket` events whose JSON matches [DataAnalysisLog/log_format.md](DataAnalysisLog/log_format.md) v1. Works fully offline (vendored Leaflet + procedural basemap, vendored fonts). Four scenarios with S / W / V / relocating-static drone paths. See [demo/README.md](demo/README.md).
