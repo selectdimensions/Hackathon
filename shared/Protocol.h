@@ -11,12 +11,14 @@
 namespace rftm {
 
 // ---- Protocol version ----
-static constexpr uint8_t PROTOCOL_VERSION = 0x01;
+// 0x02: added DetectPacket.sensor_class + altitude_m, and PositionPacket (v0.3-hardware).
+static constexpr uint8_t PROTOCOL_VERSION = 0x02;
 
 // ---- Message types ----
 enum MsgType : uint8_t {
   MSG_DETECT      = 0x01,  // sensor pod -> master   (encrypted)
   MSG_HEARTBEAT   = 0x02,  // sensor pod -> master   (encrypted)
+  MSG_POSITION    = 0x03,  // sensor pod -> master   (encrypted; deploy + on-move GNSS re-fix)
   MSG_ALERT       = 0x10,  // master -> soldier      (encrypted)
   MSG_ALL_CLEAR   = 0x11,  // master -> soldier      (encrypted)
   MSG_CHANNEL_REC = 0x20,  // master -> soldier      (encrypted)
@@ -45,6 +47,19 @@ enum ThreatClass : uint8_t {
   THREAT_LOITER_MUNITION  = 6,
 };
 
+// ---- Sensor class (DetectPacket.sensor_class) — decouples sensor modality from
+// the RF BandId, so non-RF pods (acoustic, radar, EO) report their own type.
+// Mirrors the localization-role catalog in pod-sensor-reference.md.
+enum SensorClass : uint8_t {
+  SENSOR_UNKNOWN  = 0x00,
+  SENSOR_RF       = 0x01,  // SDR / AD8318 energy detector (pairs with BandId)
+  SENSOR_ACOUSTIC = 0x02,  // MEMS mic / array — acoustic TDOA (flagship)
+  SENSOR_MMWAVE   = 0x03,  // FMCW / Doppler radar — self-range + velocity
+  SENSOR_EO       = 0x04,  // camera / thermal — bearing
+  SENSOR_MAGNETIC = 0x05,  // magnetometer — vehicle / ferrous
+  SENSOR_LIDAR    = 0x06,  // ToF / scanning LiDAR — range
+};
+
 // ---- Node ID conventions ----
 // 0x01..0x7F = sensor pod
 // 0x80       = master
@@ -65,7 +80,7 @@ static constexpr uint8_t FLAG_LOW_BATTERY        = 0x08;
 //     +----+--------+--------------------------+--------+
 //     | EP |  NC    |  ENCRYPTED PAYLOAD       | TAG(8) |
 //     +----+--------+--------------------------+--------+
-//      1B    2B          10..28 B               8B
+//      1B    2B          7..33 B                8B
 //
 // EP   = epoch byte (which session key)
 // NC   = nonce counter (per sender, resets each rekey)
@@ -90,25 +105,27 @@ static constexpr uint8_t  SESSION_KEY_LEN  = 16;  // AES-128
 
 // =====================================================================
 // Sensor -> Master detection packet (encrypted body)
-// Target on-air: 30 plaintext + 3 envelope + 8 tag = 41 bytes
+// Target on-air: 33 plaintext + 3 envelope + 8 tag = 44 bytes
 // =====================================================================
 struct __attribute__((packed)) DetectPacket {
   uint8_t  version;          // PROTOCOL_VERSION
   uint8_t  msg_type;         // MSG_DETECT
   uint8_t  node_id;          // sending pod's ID
-  uint8_t  band_id;          // BandId
+  uint8_t  band_id;          // BandId (RF frontend; BAND_UNKNOWN for non-RF sensors)
+  uint8_t  sensor_class;     // SensorClass — sensor modality (RF/acoustic/mmWave/EO/...)
   uint64_t pps_timestamp_us; // us since GPS-PPS rising edge — TDOA primary key
   int16_t  rssi_dbm;         // detected emitter RSSI, signed
   uint8_t  snr_db;           // 0..63 clipped
   uint8_t  noise_floor_dbm;  // band's ambient noise floor
   int32_t  lat_e7;           // pod own lat * 1e7
   int32_t  lon_e7;           // pod own lon * 1e7
+  int16_t  altitude_m;       // pod own altitude (m, MSL) — 3D TDOA / elevated pod
   uint8_t  flags;            // FLAG_* bits
   uint8_t  battery_pct;      // 0..100
   uint16_t seq;              // sequence (dedup at master)
   uint16_t crc16;            // CRC-16/CCITT over all preceding bytes
 };
-static_assert(sizeof(DetectPacket) == 30, "DetectPacket layout drift — update ARCHITECTURE.md airtime table");
+static_assert(sizeof(DetectPacket) == 33, "DetectPacket layout drift — update ARCHITECTURE.md airtime table");
 
 // =====================================================================
 // Sensor -> Master heartbeat (encrypted body). Sent every 30 s if no
@@ -124,6 +141,23 @@ struct __attribute__((packed)) HeartbeatPacket {
   uint16_t crc16;
 };
 static_assert(sizeof(HeartbeatPacket) == 9, "HeartbeatPacket layout drift");
+
+// =====================================================================
+// Sensor -> Master position report (encrypted body). Sent on deploy and on
+// accelerometer-triggered GNSS re-fix (the pod moved). Lets the master keep
+// each pod's 3D position current for TDOA geometry. See pod-sensor-reference.md.
+// =====================================================================
+struct __attribute__((packed)) PositionPacket {
+  uint8_t  version;          // PROTOCOL_VERSION
+  uint8_t  msg_type;         // MSG_POSITION
+  uint8_t  node_id;
+  int32_t  lat_e7;           // pod lat * 1e7
+  int32_t  lon_e7;           // pod lon * 1e7
+  int16_t  altitude_m;       // pod altitude (m, MSL)
+  uint8_t  fix_quality;      // 0=none, 1=2D, 2=3D, 3=RTK
+  uint16_t crc16;
+};
+static_assert(sizeof(PositionPacket) == 16, "PositionPacket layout drift");
 
 // =====================================================================
 // Master -> Soldier alert packet (encrypted body)

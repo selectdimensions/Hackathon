@@ -79,12 +79,14 @@ static void task_rf_detect(void* /*arg*/) {
       pkt.msg_type         = MSG_DETECT;
       pkt.node_id          = MY_NODE_ID;
       pkt.band_id          = BAND_5800_MHZ;  // TODO: build-time set per pod variant
+      pkt.sensor_class     = SENSOR_RF;       // TODO: per-variant (acoustic/mmWave/EO/...)
       pkt.pps_timestamp_us = g_pps_micros;
       pkt.rssi_dbm         = rssi_dbm;
       pkt.snr_db           = 20;   // TODO: derived from detector AGC
       pkt.noise_floor_dbm  = -95;  // TODO: rolling baseline
       pkt.lat_e7           = static_cast<int32_t>(gps.location.lat() * 1e7);
       pkt.lon_e7           = static_cast<int32_t>(gps.location.lng() * 1e7);
+      pkt.altitude_m       = static_cast<int16_t>(gps.altitude.meters());
       pkt.flags            = 0;
       pkt.battery_pct      = 80;  // TODO: ADC on battery divider
       pkt.seq              = static_cast<uint16_t>(millis() & 0xFFFF);
