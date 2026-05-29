@@ -69,11 +69,11 @@ static constexpr uint8_t FLAG_LOW_BATTERY        = 0x08;
 //
 // EP   = epoch byte (which session key)
 // NC   = nonce counter (per sender, resets each rekey)
-// TAG  = AES-128-CCM 8-byte authentication tag
+// TAG  = AES-128-EAX 8-byte authentication tag
 //
 // AAD  = [version, msg_type, sender_node_id, EP]  (5 bytes, sent in clear
 //        as the first 5 bytes of the encrypted blob's outer header, then
-//        bound by the CCM AAD input)
+//        bound by the EAX AAD input)
 //
 // Nonce[13] = [EP, node_id_hi, node_id_lo, NC_hi, NC_lo, 0,0,0,0,0,0,0,0]
 // =====================================================================
@@ -84,8 +84,8 @@ struct __attribute__((packed)) EnvelopeHeader {
 };
 static_assert(sizeof(EnvelopeHeader) == 3, "EnvelopeHeader layout drift");
 
-static constexpr uint8_t  AEAD_TAG_LEN     = 8;   // truncated CCM tag
-static constexpr uint8_t  AEAD_NONCE_LEN   = 13;  // CCM nonce
+static constexpr uint8_t  AEAD_TAG_LEN     = 8;   // truncated EAX tag
+static constexpr uint8_t  AEAD_NONCE_LEN   = 13;  // EAX nonce
 static constexpr uint8_t  SESSION_KEY_LEN  = 16;  // AES-128
 
 // =====================================================================
@@ -184,7 +184,7 @@ struct __attribute__((packed)) RekeyPacket {
 static_assert(sizeof(RekeyPacket) == 108, "RekeyPacket layout drift");
 
 // =====================================================================
-// CRC-16/CCITT (poly 0x1021, init 0xFFFF). Defence-in-depth with AES-CCM tag.
+// CRC-16/CCITT (poly 0x1021, init 0xFFFF). Defence-in-depth with AES-EAX tag.
 // =====================================================================
 inline uint16_t crc16_ccitt(const uint8_t* data, size_t len, uint16_t init = 0xFFFF) {
   uint16_t crc = init;

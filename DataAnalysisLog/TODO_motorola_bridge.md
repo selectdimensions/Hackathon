@@ -35,5 +35,5 @@ flowchart LR
 
 ## Out of scope even for the bridge phase
 
-- Encrypted MQTT payloads beyond mTLS (the LoRa AES-CCM stops at the master; what leaves the master to the broker is over a trusted local LAN or VPN).
+- Encrypted MQTT payloads beyond mTLS (the LoRa AES-EAX stops at the master; what leaves the master to the broker is over a trusted local LAN or VPN).
 - DMR/P25 encryption (depends on radio hardware support and licensing).

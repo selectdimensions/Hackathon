@@ -8,7 +8,7 @@ You are a senior brand designer + creative director with experience in defense-t
 
 - Project: an open-source, hackathon-built counter-drone RF detection and alert system.
 
-- What it does: a distributed mesh of ESP32-C6 sensor pods listens across RF bands (2.4/5.8 GHz FPV video and control, GNSS L1, 900 MHz/ELRS, future 30–88 MHz tactical). A master node fuses detections via TDOA (time-difference-of-arrival, GPS-PPS synchronized) to localize emitters, encrypts traffic with AES-128-CCM under rotating session keys, and pushes short audio alerts ("threat bearing two-seven-zero, FPV") to soldier-worn nodes via LoRa on 868 MHz.
+- What it does: a distributed mesh of ESP32-C6 sensor pods listens across RF bands (2.4/5.8 GHz FPV video and control, GNSS L1, 900 MHz/ELRS, future 30–88 MHz tactical). A master node fuses detections via TDOA (time-difference-of-arrival, GPS-PPS synchronized) to localize emitters, encrypts traffic with AES-128-EAX under rotating session keys, and pushes short audio alerts ("threat bearing two-seven-zero, FPV") to soldier-worn nodes via LoRa on 868 MHz.
 
 - Subsystems: `LoRaMeshing/`, `Rx/` (soldier hardware), `DataAnalysisLog/`, `UserNotification/`, `ModuleDesign/` (enclosures + PCB), plus a shared protocol/crypto/audio-cue layer.
 
@@ -359,7 +359,7 @@ The Tenebris voice is calm, precise, and protective. It balances "quiet professi
 
 ### 50-Word Boilerplate Paragraph
 
-> TENEBRIS is an open-source, hackathon-built counter-drone RF detection and alert system. It deploys a distributed mesh of ESP32-C6 sensor pods to passively sense drone signals via time-difference-of-arrival (TDOA). Encrypted with AES-128-CCM, Tenebris pushes immediate audio alerts to soldier-worn nodes via LoRa, enabling resilient, non-kinetic civil and humanitarian protection.
+> TENEBRIS is an open-source, hackathon-built counter-drone RF detection and alert system. It deploys a distributed mesh of ESP32-C6 sensor pods to passively sense drone signals via time-difference-of-arrival (TDOA). Encrypted with AES-128-EAX, Tenebris pushes immediate audio alerts to soldier-worn nodes via LoRa, enabling resilient, non-kinetic civil and humanitarian protection.
 
 ---
 

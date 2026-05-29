@@ -43,9 +43,9 @@ sequenceDiagram
     M->>P: MSG_REKEY (Ed25519-signed, X25519 eph pubkey)
     M->>S: MSG_REKEY (same broadcast)
     Note over P,M: Both derive K_session via X25519 + HKDF
-    P->>M: DetectPacket (AES-128-CCM under K_session)
+    P->>M: DetectPacket (AES-128-EAX under K_session)
     M->>M: TDOA + RSSI solve
-    M->>S: AlertPacket (AES-128-CCM under K_session)
+    M->>S: AlertPacket (AES-128-EAX under K_session)
     S->>S: Play audio cue (cue_id -> WAV from LittleFS)
 ```
 
@@ -53,7 +53,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full detail, [shared/Protocol.h](shar
 
 ## Security highlights
 
-- **All LoRa packets encrypted + authenticated** with AES-128-CCM (8-byte tag).
+- **All LoRa packets encrypted + authenticated** with AES-128-EAX (8-byte tag).
 - **Session keys rotate every 45–75 min** (60 min ± 15 min jitter), via Ed25519-signed X25519 rekey broadcast → HKDF-SHA256.
 - **Per-node Ed25519 identity keys**, pinned at provisioning. No PKI, no PSK, no shared secrets in repo.
 - **Forward secrecy** — ephemeral X25519 on every rekey; past traffic stays safe even if a long-term key leaks later.

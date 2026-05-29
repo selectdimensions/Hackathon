@@ -75,7 +75,7 @@ All are in [`.gitignore`](.gitignore). Future hardening: add a pre-commit hook r
 
 ---
 
-## 2. LoRa packet confidentiality (AES-128-CCM + Ed25519 rekey)
+## 2. LoRa packet confidentiality (AES-128-EAX + Ed25519 rekey)
 
 ### Threat model
 
@@ -86,12 +86,23 @@ All are in [`.gitignore`](.gitignore). Future hardening: add a pre-commit hook r
 
 | Property | Mechanism |
 |---|---|
-| Confidentiality | AES-128-CCM, 8-byte truncated tag |
-| Integrity / origin | CCM tag (per-packet) + Ed25519 signature (rekey only) |
+| Confidentiality | AES-128-EAX, 8-byte truncated tag |
+| Integrity / origin | EAX tag (per-packet) + Ed25519 signature (rekey only) |
 | Forward secrecy | Ephemeral X25519 on every rekey; old session keys overwritten 5 min after epoch transition |
-| Anti-replay | 1-byte epoch + 2-byte per-sender nonce counter in CCM nonce + receiver-side high-water-mark check |
+| Anti-replay | 1-byte epoch + 2-byte per-sender nonce counter in EAX nonce + receiver-side high-water-mark check |
 | Key rotation | Every 45–75 min (60 ± 15 jittered). Configurable in [30 min, 2 h] via `LoRaConfig.h` |
 | Identity | Per-node Ed25519 long-term keypair, pinned at provisioning (no PKI) |
+
+> **AEAD cipher note (was CCM).** The mesh uses **AES-128-EAX**, not CCM. The original
+> spec named CCM, but the project's crypto library (rweather/arduinolibs `Crypto`, also the
+> source of our Ed25519/X25519/SHA-256) implements **EAX/GCM/ChaCha-Poly, not CCM** — so
+> `#include <CCM.h>` never compiled. EAX is an equivalent NIST-class two-pass AEAD that
+> natively accepts the existing **13-byte nonce** and **8-byte truncated tag** (no
+> `setLengths()` ceremony, unlike CCM), so the on-air envelope is byte-identical and only the
+> algorithm changed. Security properties are preserved: confidentiality + per-packet
+> integrity + the epoch/nonce-counter anti-replay scheme are unchanged, and the tag length
+> was **not** reduced (still 8 bytes). GCM was the alternative; EAX was chosen for its
+> robustness to the per-epoch nonce-counter scheme and its native nonce/tag flexibility.
 
 ### Provisioning workflow
 

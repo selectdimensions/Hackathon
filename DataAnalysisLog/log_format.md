@@ -9,7 +9,7 @@ The master node emits **newline-delimited JSON** (ndjson) over USB serial at 115
 | `detect` | Master received a `DetectPacket` from a sensor pod |
 | `alert` | Master transmitted an `AlertPacket` to soldier nodes |
 | `rekey` | Master transmitted a `RekeyPacket` (every 45–75 min) |
-| `decrypt_fail` | Inbound packet failed AES-CCM tag verification |
+| `decrypt_fail` | Inbound packet failed AES-EAX tag verification |
 | `crc_fail` | Inbound packet passed AEAD but failed inner CRC-16 |
 | `boot` | Master booted |
 
