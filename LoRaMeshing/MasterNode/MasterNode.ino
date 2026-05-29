@@ -18,6 +18,7 @@
 #include "LoRaConfig.h"
 #include "Crypto.h"
 #include "RadioLink.h"
+#include "Triangulate.h"
 // #include "PinnedKeys.h"  // generated; uncomment after gen_pinned_header.ps1
 
 using namespace rftm;
@@ -50,12 +51,25 @@ struct PodReport {
   int16_t  rssi_dbm;
   int32_t  lat_e7;
   int32_t  lon_e7;
+  int16_t  alt_m;
   uint8_t  band_id;
+  uint8_t  sensor_class;
   uint32_t recv_ms;
 };
 static const size_t MAX_PODS = 16;
 static PodReport g_registry[MAX_PODS];
 static SemaphoreHandle_t g_reg_mtx;
+
+// Master's surveyed position — the observer reference for bearing/distance.
+static const double MASTER_LAT = 50.100000;
+static const double MASTER_LON = 14.420000;
+
+// Acoustic correlation window: pods detecting the same transient arrive within
+// (baseline / speed-of-sound); 4 s covers ~1.3 km of pod spread.
+static const uint32_t SYNC_WINDOW_MS = 4000;
+
+// Solved alerts awaiting encrypted TX on Freq B.
+static QueueHandle_t g_alert_queue;
 
 // ============================================================
 // Tasks
@@ -93,20 +107,65 @@ static void task_lora_rx_a(void* /*arg*/) {
 static void task_triangulate(void* /*arg*/) {
   for (;;) {
     vTaskDelay(pdMS_TO_TICKS(250));
-    // TODO:
-    //  1. Scan registry for 3+ pods with same band_id reporting within 10 ms PPS window.
-    //  2. Compute Δt_ij = pps_us_i - pps_us_j.
-    //  3. Solve hyperbolic intersection (Bancroft closed-form or LS).
-    //  4. Fallback to RSSI multilateration if any pod's pps_us == 0.
-    //  5. Build AlertPacket with bearing/distance/threat_class/cue_id.
-    //  6. Enqueue for TX.
+
+    // Collect recent acoustic reports with valid GNSS-PPS timestamps. Acoustic
+    // TDOA is the precise path (gap C1); >=4 pods (one elevated) give a 3D fix.
+    AcousticObs obs[MAX_PODS];
+    size_t k = 0;
+    const uint32_t now = millis();
+
+    xSemaphoreTake(g_reg_mtx, portMAX_DELAY);
+    for (size_t i = 0; i < MAX_PODS && k < MAX_PODS; ++i) {
+      const PodReport& r = g_registry[i];
+      if (r.node_id == 0) continue;
+      if (r.sensor_class != SENSOR_ACOUSTIC) continue;
+      if (r.pps_us == 0) continue;                     // no timestamp
+      if (now - r.recv_ms > SYNC_WINDOW_MS) continue;  // stale
+      obs[k].lat = r.lat_e7 / 1e7;
+      obs[k].lon = r.lon_e7 / 1e7;
+      obs[k].alt_m = r.alt_m;
+      obs[k].t_us = r.pps_us;
+      ++k;
+    }
+    xSemaphoreGive(g_reg_mtx);
+
+    if (k < 4) continue;  // (RF-only sets would fall back to RSSI multilat — TODO)
+
+    GeoFix fix = tri_solve_acoustic_tdoa(obs, k);
+    if (!fix.ok) continue;
+
+    float bearing_deg = 0.0f, dist_m = 0.0f;
+    tri_bearing_distance(MASTER_LAT, MASTER_LON, fix.lat, fix.lon, &bearing_deg, &dist_m);
+
+    AlertPacket a = {};
+    a.version       = PROTOCOL_VERSION;
+    a.msg_type      = MSG_ALERT;
+    a.bearing_deg   = static_cast<uint8_t>(lroundf(fmodf(bearing_deg, 360.0f) * 256.0f / 360.0f));
+    a.distance_code = tri_distance_code(dist_m);
+    a.threat_class  = THREAT_UNKNOWN;  // TODO: acoustic classifier -> ThreatClass
+    a.tti_sec       = 0xFF;            // TODO: closing-speed estimate from solve history
+    a.confidence    = 80;
+    a.cue_id        = 0;               // TODO: map bearing/dist -> AudioCues cue_id
+    a.crc16 = crc16_ccitt(reinterpret_cast<const uint8_t*>(&a),
+                          sizeof(a) - sizeof(uint16_t));
+    xQueueSend(g_alert_queue, &a, 0);
   }
 }
 
 static void task_lora_tx_b(void* /*arg*/) {
+  AlertPacket a;
+  uint8_t out[64];
   for (;;) {
-    vTaskDelay(pdMS_TO_TICKS(100));
-    // TODO: drain alert TX queue, AEAD-encrypt under current session, TX on Freq B.
+    if (xQueueReceive(g_alert_queue, &a, portMAX_DELAY) != pdTRUE) continue;
+    if (!g_session_current.valid) continue;
+    size_t n = aead_encrypt(g_session_current, MY_NODE_ID, g_master_nonce++,
+                            reinterpret_cast<const uint8_t*>(&a), sizeof(a),
+                            out, sizeof(out));
+    if (n == 0) continue;
+    // NOTE: single radio shared with RX/rekey — a radio mutex is a TODO; for now
+    // we retune per-op (scaffold). Alerts go on Freq B (downlink).
+    radio.setFrequency(FREQ_B_MHZ);
+    g_radios.transmitWithFailover(out, n);
   }
 }
 
@@ -160,6 +219,7 @@ void setup() {
 
   g_reg_mtx = xSemaphoreCreateMutex();
   memset(g_registry, 0, sizeof(g_registry));
+  g_alert_queue = xQueueCreate(8, sizeof(AlertPacket));
 
   xTaskCreate(task_lora_rx_a,   "rx_a",      4096, nullptr, 5, nullptr);
   xTaskCreate(task_triangulate, "triang",    8192, nullptr, 3, nullptr);
