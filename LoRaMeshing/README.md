@@ -50,6 +50,7 @@ flowchart LR
 | GPS RX (MCU side) | 16 | NMEA from u-blox NEO-M9N |
 | GPS TX (MCU side) | 17 | |
 | RF detector ADC | 1 | Band-specific log detector (AD8318 etc.) |
+| TX_ACTIVE | 2 | HIGH during LoRa TX — gates a co-located SDR / the redundant radio's RX (self-jam, gap B6) |
 | I²C SDA / SCL | 21 / 22 | Battery monitor / IMU (master only) |
 
 The SX1262 SPI bus uses the default `SPI` peripheral on ESP32-C6.

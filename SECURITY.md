@@ -156,6 +156,15 @@ Every 45–75 min the master broadcasts a `MSG_REKEY` packet (~108 B, 2 LoRa fra
 - Jamming of the LoRa band itself (DoS, not confidentiality).
 - Physical tamper of a node (assume the attacker who has the device can eventually get the keys).
 
+### Pi super-pods & multi-radio (v0.3-hardware)
+
+The hardware pivot changes the node mix but **not** the trust boundary:
+
+- **Keys live only on the ESP32.** Most pods are bare-metal ESP32 + sensor (the fixed bus). The crypto TCB is the ESP32 — no MMU, no shell, no interpreter — and session/identity keys live only in its encrypted NVS.
+- **Pi super-pods don't hold keys.** A minority of pods pair the ESP32 with a Linux host (Raspberry Pi 5 + RTL-SDR/HackRF) for wideband RF (see [PiPod/](PiPod/)). The Pi runs full Linux (large attack surface), so it is treated as **untrusted**: the Pi→ESP32 UART is one-way and carries only a plaintext `DetectPacket` payload — never key material. A compromised Pi can at worst inject/forge detections into *its own* pod's uplink (the master rate-limits and cross-checks against other pods); it **cannot** exfiltrate keys, impersonate other nodes, or decrypt mesh traffic, because the ESP32 is the sole holder of the keys and the SX1262.
+- **The redundant radio adds no key exposure.** A pod may run a primary SX1262 plus a redundant SX1278 (433 MHz) or SX1280/1281 (2.4 GHz). The wire format is PHY-agnostic (see [shared/RadioLink.h](shared/RadioLink.h)): the *same* AES-128-EAX envelope, nonce discipline, and epoch keys go out whichever radio is chosen. Switching radios is a transport/jam-resistance choice, not a crypto change.
+- **TX/RX co-existence (not a security boundary).** The ESP32 asserts a `TX_ACTIVE` GPIO around each transmit so a co-located SDR or the redundant radio gates its RX (self-jam mitigation). This is a robustness measure; it does not affect confidentiality or integrity.
+
 ---
 
 ## Reporting vulnerabilities

@@ -40,6 +40,8 @@ static const int PIN_GPS_PPS   = 3;
 static const int PIN_GPS_RX    = 16;  // ESP32-C6 -> GPS TX
 static const int PIN_GPS_TX    = 17;  // ESP32-C6 -> GPS RX
 static const int PIN_RF_DETECT_ADC = 1;  // band-specific analog frontend
+static const int PIN_TX_ACTIVE     = 2;  // HIGH during LoRa TX — gates co-located SDR
+                                          // and the redundant radio's RX (self-jam, B6)
 
 // ----- Radio + GPS objects -----
 // Primary SX1262 (sub-GHz). A redundant SX1278/SX1280 would be added as a second
@@ -125,13 +127,17 @@ static void task_lora_tx(void* /*arg*/) {
       // CSMA: CAD-gated TX with random backoff on busy. transmitWithFailover()
       // tries the primary radio (and any redundant radios) once each; we wrap it
       // in the backoff/retry loop from LoRaConfig.h.
+      // PIN_TX_ACTIVE is held HIGH across the TX window so a co-located SDR (or
+      // the redundant radio) can gate its RX and avoid front-end desense (B6).
       radio.setFrequency(FREQ_A_MHZ);
+      digitalWrite(PIN_TX_ACTIVE, HIGH);
       for (uint8_t attempt = 0; attempt < CAD_MAX_RETRIES; ++attempt) {
         if (g_radios.transmitWithFailover(out, n) >= 0) break;  // sent
         uint16_t backoff = CAD_BACKOFF_MIN_MS +
                            (esp_random() % (CAD_BACKOFF_MAX_MS - CAD_BACKOFF_MIN_MS));
         vTaskDelay(pdMS_TO_TICKS(backoff));
       }
+      digitalWrite(PIN_TX_ACTIVE, LOW);
     }
   }
 }
@@ -178,6 +184,9 @@ void setup() {
     while (true) { delay(1000); }
   }
   g_radios[0].bind(&radio, sx1262_uplink_g());  // primary: 868.1 MHz, sub-band g
+
+  pinMode(PIN_TX_ACTIVE, OUTPUT);
+  digitalWrite(PIN_TX_ACTIVE, LOW);
 
   g_tx_queue = xQueueCreate(8, sizeof(DetectPacket));
 
